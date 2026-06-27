@@ -10,94 +10,94 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class ModelExtractorsTest {
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
-    @After
-    public void tearDown() throws Exception {
-        ModelExtractors.getInstance().reset();
+  @After
+  public void tearDown() throws Exception {
+    ModelExtractors.getInstance().reset();
+  }
+
+  @Test
+  public void shouldLoadExtractorsOnInstantiation() {
+
+    ModelExtractors.getInstance();
+    String[] expectedKeys = new String[]{
+      "pages",
+      "posts",
+      "indexs",
+      "archives",
+      "feeds",
+      "published_posts",
+      "published_pages",
+      "published_content",
+      "published_date",
+      "all_content",
+      "alltags",
+      "db",
+      "tag_posts",
+      "tags",
+      "tagged_documents",
+    };
+
+    for (String aKey : expectedKeys) {
+      assertThat(ModelExtractors.getInstance().containsKey(aKey)).isTrue();
     }
+  }
 
-    @Test
-    public void shouldLoadExtractorsOnInstantiation() {
+  @Test
+  public void shouldRegisterExtractorsOnlyForCustomTypes() {
+    String knownDocumentType = "alltag";
+    DocumentTypes.addDocumentType(knownDocumentType);
 
-        ModelExtractors.getInstance();
-        String[] expectedKeys = new String[]{
-            "pages",
-            "posts",
-            "indexs",
-            "archives",
-            "feeds",
-            "published_posts",
-            "published_pages",
-            "published_content",
-            "published_date",
-            "all_content",
-            "alltags",
-            "db",
-            "tag_posts",
-            "tags",
-            "tagged_documents",
-        };
+    ModelExtractors.getInstance().registerExtractorsForCustomTypes(knownDocumentType);
 
-        for (String aKey : expectedKeys) {
-            assertThat(ModelExtractors.getInstance().containsKey(aKey)).isTrue();
-        }
-    }
+    assertThat(ModelExtractors.getInstance().containsKey("published_alltags")).isFalse();
+  }
 
-    @Test
-    public void shouldRegisterExtractorsOnlyForCustomTypes() {
-        String knownDocumentType = "alltag";
-        DocumentTypes.addDocumentType(knownDocumentType);
+  @Test
+  public void shouldRegisterExtractorsForCustomType() {
+    // A document type is known
+    String newDocumentType = "project";
+    DocumentTypes.addDocumentType(newDocumentType);
 
-        ModelExtractors.getInstance().registerExtractorsForCustomTypes(knownDocumentType);
+    // when we register extractors for the new type
+    ModelExtractors.getInstance().registerExtractorsForCustomTypes(newDocumentType);
 
-        assertThat(ModelExtractors.getInstance().containsKey("published_alltags")).isFalse();
-    }
+    // then an extractor is registered by pluralized type as key
+    assertThat(ModelExtractors.getInstance().containsKey("projects")).isTrue();
 
-    @Test
-    public void shouldRegisterExtractorsForCustomType() {
-        // A document type is known
-        String newDocumentType = "project";
-        DocumentTypes.addDocumentType(newDocumentType);
+    // and an extractor for published types is registered
+    assertThat(ModelExtractors.getInstance().containsKey("published_projects")).isTrue();
+  }
 
-        // when we register extractors for the new type
-        ModelExtractors.getInstance().registerExtractorsForCustomTypes(newDocumentType);
+  @Test
+  public void shouldThrowAnExceptionIfDocumentTypeIsUnknown() {
+    thrown.expect(UnsupportedOperationException.class);
 
-        // then an extractor is registered by pluralized type as key
-        assertThat(ModelExtractors.getInstance().containsKey("projects")).isTrue();
+    String unknownDocumentType = "unknown";
+    ModelExtractors.getInstance().registerExtractorsForCustomTypes(unknownDocumentType);
+  }
 
-        // and an extractor for published types is registered
-        assertThat(ModelExtractors.getInstance().containsKey("published_projects")).isTrue();
-    }
+  @Test
+  public void shouldResetToNonCustomizedExtractors() throws Exception {
 
-    @Test
-    public void shouldThrowAnExceptionIfDocumentTypeIsUnknown() {
-        thrown.expect(UnsupportedOperationException.class);
+    //given:
+    // A document type is known
+    String newDocumentType = "project";
+    DocumentTypes.addDocumentType(newDocumentType);
 
-        String unknownDocumentType = "unknown";
-        ModelExtractors.getInstance().registerExtractorsForCustomTypes(unknownDocumentType);
-    }
+    // when we register extractors for the new type
+    ModelExtractors.getInstance().registerExtractorsForCustomTypes(newDocumentType);
 
-    @Test
-    public void shouldResetToNonCustomizedExtractors() throws Exception {
+    //expect:
+    assertThat(ModelExtractors.getInstance().keySet().size()).isEqualTo(18);
 
-        //given:
-        // A document type is known
-        String newDocumentType = "project";
-        DocumentTypes.addDocumentType(newDocumentType);
+    //when:
+    ModelExtractors.getInstance().reset();
 
-        // when we register extractors for the new type
-        ModelExtractors.getInstance().registerExtractorsForCustomTypes(newDocumentType);
+    //then:
+    assertThat(ModelExtractors.getInstance().keySet().size()).isEqualTo(16);
 
-        //expect:
-        assertThat(ModelExtractors.getInstance().keySet().size()).isEqualTo(18);
-
-        //when:
-        ModelExtractors.getInstance().reset();
-
-        //then:
-        assertThat(ModelExtractors.getInstance().keySet().size()).isEqualTo(16);
-
-    }
+  }
 }

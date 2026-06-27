@@ -31,13 +31,13 @@ import org.junit.BeforeClass;
  */
 public class GroovyTemplateEngineRenderingTest extends AbstractTemplateEngineRenderingTest {
 
-    @BeforeClass
-    public static void setUpClass() {
-        //setUpDatabase(StorageType.PLOCAL);
-    }
+  @BeforeClass
+  public static void setUpClass() {
+    //setUpDatabase(StorageType.PLOCAL);
+  }
 
-    public GroovyTemplateEngineRenderingTest() {
-        super("groovyTemplates", "gsp");
-    }
+  public GroovyTemplateEngineRenderingTest() {
+    super("groovyTemplates", "gsp");
+  }
 
 }

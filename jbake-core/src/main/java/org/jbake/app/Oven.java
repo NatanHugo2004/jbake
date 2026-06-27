@@ -29,212 +29,212 @@ import java.util.ServiceLoader;
  */
 public class Oven {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(Oven.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Oven.class);
 
-    private final Utensils utensils;
-    private final List<Throwable> errors = new LinkedList<>();
-    private int renderedCount = 0;
+  private final Utensils utensils;
+  private final List<Throwable> errors = new LinkedList<>();
+  private int renderedCount = 0;
 
-    /**
-     * @param source       Project source directory
-     * @param destination  The destination folder
-     * @param isClearCache Should the cache be cleaned
-     * @throws Exception if configuration is not loaded correctly
-     * @deprecated Use {@link #Oven(JBakeConfiguration)} instead
-     * Delegate c'tor to prevent API break for the moment.
-     */
-    @Deprecated
-    public Oven(final File source, final File destination, final boolean isClearCache) throws Exception {
-        this(new JBakeConfigurationFactory().createDefaultJbakeConfiguration(source, destination, isClearCache));
+  /**
+   * @param source       Project source directory
+   * @param destination  The destination folder
+   * @param isClearCache Should the cache be cleaned
+   * @throws Exception if configuration is not loaded correctly
+   * @deprecated Use {@link #Oven(JBakeConfiguration)} instead
+   * Delegate c'tor to prevent API break for the moment.
+   */
+  @Deprecated
+  public Oven(final File source, final File destination, final boolean isClearCache) throws Exception {
+    this(new JBakeConfigurationFactory().createDefaultJbakeConfiguration(source, destination, isClearCache));
+  }
+
+  /**
+   * @param source       Project source directory
+   * @param destination  The destination folder
+   * @param config       Project configuration
+   * @param isClearCache Should the cache be cleaned
+   * @throws Exception if configuration is not loaded correctly
+   * @deprecated Use {@link #Oven(JBakeConfiguration)} instead
+   * Creates a new instance of the Oven with references to the source and destination folders.
+   */
+  @Deprecated
+  public Oven(final File source, final File destination, final CompositeConfiguration config, final boolean isClearCache) throws Exception {
+    this(new JBakeConfigurationFactory().createDefaultJbakeConfiguration(source, destination, config, isClearCache));
+  }
+
+  /**
+   * Create an Oven instance by a {@link JBakeConfiguration}
+   * <p>
+   * It creates default {@link Utensils} needed to bake sites.
+   *
+   * @param config The project configuration. see {@link JBakeConfiguration}
+   */
+  public Oven(JBakeConfiguration config) {
+    this.utensils = UtensilsFactory.createDefaultUtensils(config);
+  }
+
+  /**
+   * Create an Oven instance with given {@link Utensils}
+   *
+   * @param utensils All Utensils necessary to bake
+   */
+  public Oven(Utensils utensils) {
+    checkConfiguration(utensils.getConfiguration());
+    this.utensils = utensils;
+  }
+
+  @Deprecated
+  public CompositeConfiguration getConfig() {
+    return ((DefaultJBakeConfiguration) utensils.getConfiguration()).getCompositeConfiguration();
+  }
+
+  // TODO: do we want to use this. Else, config could be final
+  @Deprecated
+  public void setConfig(final CompositeConfiguration config) {
+    ((DefaultJBakeConfiguration) utensils.getConfiguration()).setCompositeConfiguration(config);
+  }
+
+  /**
+   * Checks source path contains required sub-folders (i.e. templates) and setups up variables for them.
+   *
+   * @deprecated There is no need for this method anymore. Validation is now part of the instantiation.
+   * Can be removed with 3.0.0.
+   */
+  @Deprecated
+  public void setupPaths() {
+    /* nothing to do here */
+  }
+
+  /**
+   * Checks source path contains required sub-folders (i.e. templates) and setups up variables for them.
+   * Creates destination folder if it does not exist.
+   *
+   * @throws JBakeException If template or contents folder don't exist
+   */
+  private void checkConfiguration(JBakeConfiguration configuration) {
+    JBakeConfigurationInspector inspector = new JBakeConfigurationInspector(configuration);
+    inspector.inspect();
+  }
+
+  /**
+   * Sets the Locale for the JVM
+   *
+   */
+  private void setLocale() {
+    String localeString = getUtensils().getConfiguration().getJvmLocale();
+    Locale locale = localeString != null ? LocaleUtils.toLocale(localeString) : Locale.getDefault();
+    Locale.setDefault(locale);
+  }
+
+  /**
+   * Responsible for incremental baking, typically a single file at a time.
+   *
+   * @param fileToBake The file to bake
+   */
+  public void bake(File fileToBake) {
+    Asset asset = utensils.getAsset();
+    if (asset.isAssetFile(fileToBake)) {
+      LOGGER.info("Baking a change to an asset [" + fileToBake.getPath() + "]");
+      asset.copySingleFile(fileToBake);
+    } else {
+      LOGGER.info("Playing it safe and running a full bake...");
+      bake();
+    }
+  }
+
+  /**
+   * All the good stuff happens in here...
+   */
+  public void bake() {
+
+    ContentStore contentStore = utensils.getContentStore();
+    JBakeConfiguration config = utensils.getConfiguration();
+    Crawler crawler = utensils.getCrawler();
+    Asset asset = utensils.getAsset();
+    setLocale();
+
+    try {
+
+      final long start = new Date().getTime();
+      LOGGER.info("Baking has started...");
+      contentStore.startup();
+      updateDocTypesFromConfiguration();
+      contentStore.updateSchema();
+      contentStore.updateAndClearCacheIfNeeded(config.getClearCache(), config.getTemplateFolder());
+
+      // process source content
+      crawler.crawl();
+
+      // process data files
+      crawler.crawlDataFiles();
+
+      // render content
+      renderContent();
+
+      // copy assets
+      asset.copy();
+      asset.copyAssetsFromContent(config.getContentFolder());
+
+      errors.addAll(asset.getErrors());
+
+      LOGGER.info("Baking finished!");
+      long end = new Date().getTime();
+      LOGGER.info("Baked {} items in {}ms", renderedCount, end - start);
+      if (!errors.isEmpty()) {
+        LOGGER.error("Failed to bake {} item(s)!", errors.size());
+      }
+    } finally {
+      contentStore.close();
+      contentStore.shutdown();
+    }
+  }
+
+  /**
+   * Iterates over the configuration, searching for keys like "template.index.file=..."
+   * in order to register new document types.
+   */
+  private void updateDocTypesFromConfiguration() {
+    resetDocumentTypesAndExtractors();
+    JBakeConfiguration config = utensils.getConfiguration();
+
+    ModelExtractorsDocumentTypeListener listener = new ModelExtractorsDocumentTypeListener();
+    DocumentTypes.addListener(listener);
+
+    for (String docType : config.getDocumentTypes()) {
+      DocumentTypes.addDocumentType(docType);
     }
 
-    /**
-     * @param source       Project source directory
-     * @param destination  The destination folder
-     * @param config       Project configuration
-     * @param isClearCache Should the cache be cleaned
-     * @throws Exception if configuration is not loaded correctly
-     * @deprecated Use {@link #Oven(JBakeConfiguration)} instead
-     * Creates a new instance of the Oven with references to the source and destination folders.
-     */
-    @Deprecated
-    public Oven(final File source, final File destination, final CompositeConfiguration config, final boolean isClearCache) throws Exception {
-        this(new JBakeConfigurationFactory().createDefaultJbakeConfiguration(source, destination, config, isClearCache));
+    // needs manually setting as this isn't defined in same way as document types for content files
+    DocumentTypes.addDocumentType(config.getDataFileDocType());
+  }
+
+  private void resetDocumentTypesAndExtractors() {
+    DocumentTypes.resetDocumentTypes();
+    ModelExtractors.getInstance().reset();
+  }
+
+  /**
+   * Load {@link RenderingTool} instances and delegate rendering of documents to them
+   */
+  private void renderContent() {
+    JBakeConfiguration config = utensils.getConfiguration();
+    Renderer renderer = utensils.getRenderer();
+    ContentStore contentStore = utensils.getContentStore();
+
+    for (RenderingTool tool : ServiceLoader.load(RenderingTool.class)) {
+      try {
+        renderedCount += tool.render(renderer, contentStore, config);
+      } catch (RenderingException e) {
+        errors.add(e);
+      }
     }
+  }
 
-    /**
-     * Create an Oven instance by a {@link JBakeConfiguration}
-     * <p>
-     * It creates default {@link Utensils} needed to bake sites.
-     *
-     * @param config The project configuration. see {@link JBakeConfiguration}
-     */
-    public Oven(JBakeConfiguration config) {
-        this.utensils = UtensilsFactory.createDefaultUtensils(config);
-    }
+  public List<Throwable> getErrors() {
+    return new ArrayList<>(errors);
+  }
 
-    /**
-     * Create an Oven instance with given {@link Utensils}
-     *
-     * @param utensils All Utensils necessary to bake
-     */
-    public Oven(Utensils utensils) {
-        checkConfiguration(utensils.getConfiguration());
-        this.utensils = utensils;
-    }
-
-    @Deprecated
-    public CompositeConfiguration getConfig() {
-        return ((DefaultJBakeConfiguration) utensils.getConfiguration()).getCompositeConfiguration();
-    }
-
-    // TODO: do we want to use this. Else, config could be final
-    @Deprecated
-    public void setConfig(final CompositeConfiguration config) {
-        ((DefaultJBakeConfiguration) utensils.getConfiguration()).setCompositeConfiguration(config);
-    }
-
-    /**
-     * Checks source path contains required sub-folders (i.e. templates) and setups up variables for them.
-     *
-     * @deprecated There is no need for this method anymore. Validation is now part of the instantiation.
-     * Can be removed with 3.0.0.
-     */
-    @Deprecated
-    public void setupPaths() {
-        /* nothing to do here */
-    }
-
-    /**
-     * Checks source path contains required sub-folders (i.e. templates) and setups up variables for them.
-     * Creates destination folder if it does not exist.
-     *
-     * @throws JBakeException If template or contents folder don't exist
-     */
-    private void checkConfiguration(JBakeConfiguration configuration) {
-        JBakeConfigurationInspector inspector = new JBakeConfigurationInspector(configuration);
-        inspector.inspect();
-    }
-
-    /**
-     * Sets the Locale for the JVM
-     *
-     */
-    private void setLocale() {
-        String localeString = getUtensils().getConfiguration().getJvmLocale();
-        Locale locale = localeString != null ? LocaleUtils.toLocale(localeString) : Locale.getDefault();
-        Locale.setDefault(locale);
-    }
-
-    /**
-     * Responsible for incremental baking, typically a single file at a time.
-     *
-     * @param fileToBake The file to bake
-     */
-    public void bake(File fileToBake) {
-        Asset asset = utensils.getAsset();
-        if(asset.isAssetFile(fileToBake)) {
-            LOGGER.info("Baking a change to an asset [" + fileToBake.getPath() + "]");
-            asset.copySingleFile(fileToBake);
-        } else {
-            LOGGER.info("Playing it safe and running a full bake...");
-            bake();
-        }
-    }
-
-    /**
-     * All the good stuff happens in here...
-     */
-    public void bake() {
-
-        ContentStore contentStore = utensils.getContentStore();
-        JBakeConfiguration config = utensils.getConfiguration();
-        Crawler crawler = utensils.getCrawler();
-        Asset asset = utensils.getAsset();
-        setLocale();
-
-        try {
-
-            final long start = new Date().getTime();
-            LOGGER.info("Baking has started...");
-            contentStore.startup();
-            updateDocTypesFromConfiguration();
-            contentStore.updateSchema();
-            contentStore.updateAndClearCacheIfNeeded(config.getClearCache(), config.getTemplateFolder());
-
-            // process source content
-            crawler.crawl();
-
-            // process data files
-            crawler.crawlDataFiles();
-
-            // render content
-            renderContent();
-
-            // copy assets
-            asset.copy();
-            asset.copyAssetsFromContent(config.getContentFolder());
-
-            errors.addAll(asset.getErrors());
-
-            LOGGER.info("Baking finished!");
-            long end = new Date().getTime();
-            LOGGER.info("Baked {} items in {}ms", renderedCount, end - start);
-            if (!errors.isEmpty()) {
-                LOGGER.error("Failed to bake {} item(s)!", errors.size());
-            }
-        } finally {
-            contentStore.close();
-            contentStore.shutdown();
-        }
-    }
-
-    /**
-     * Iterates over the configuration, searching for keys like "template.index.file=..."
-     * in order to register new document types.
-     */
-    private void updateDocTypesFromConfiguration() {
-        resetDocumentTypesAndExtractors();
-        JBakeConfiguration config = utensils.getConfiguration();
-
-        ModelExtractorsDocumentTypeListener listener = new ModelExtractorsDocumentTypeListener();
-        DocumentTypes.addListener(listener);
-
-        for (String docType : config.getDocumentTypes()) {
-            DocumentTypes.addDocumentType(docType);
-        }
-
-        // needs manually setting as this isn't defined in same way as document types for content files
-        DocumentTypes.addDocumentType(config.getDataFileDocType());
-    }
-
-    private void resetDocumentTypesAndExtractors() {
-        DocumentTypes.resetDocumentTypes();
-        ModelExtractors.getInstance().reset();
-    }
-
-    /**
-     * Load {@link RenderingTool} instances and delegate rendering of documents to them
-     */
-    private void renderContent() {
-        JBakeConfiguration config = utensils.getConfiguration();
-        Renderer renderer = utensils.getRenderer();
-        ContentStore contentStore = utensils.getContentStore();
-
-        for (RenderingTool tool : ServiceLoader.load(RenderingTool.class)) {
-            try {
-                renderedCount += tool.render(renderer, contentStore, config);
-            } catch (RenderingException e) {
-                errors.add(e);
-            }
-        }
-    }
-
-    public List<Throwable> getErrors() {
-        return new ArrayList<>(errors);
-    }
-
-    public Utensils getUtensils() {
-        return utensils;
-    }
+  public Utensils getUtensils() {
+    return utensils;
+  }
 }

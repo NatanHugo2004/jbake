@@ -18,84 +18,84 @@ import static org.mockito.Mockito.when;
 
 public class FeedRendererTest {
 
-    @Test
-    public void returnsZeroWhenConfigDoesNotRenderFeeds() throws RenderingException {
-        FeedRenderer renderer = new FeedRenderer();
+  @Test
+  public void returnsZeroWhenConfigDoesNotRenderFeeds() throws RenderingException {
+    FeedRenderer renderer = new FeedRenderer();
 
-        JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
-        when(configuration.getRenderFeed()).thenReturn(false);
+    JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
+    when(configuration.getRenderFeed()).thenReturn(false);
 
-        ContentStore contentStore = mock(ContentStore.class);
+    ContentStore contentStore = mock(ContentStore.class);
 
-        Renderer mockRenderer = mock(Renderer.class);
-        int renderResponse = renderer.render(mockRenderer, contentStore, configuration);
+    Renderer mockRenderer = mock(Renderer.class);
+    int renderResponse = renderer.render(mockRenderer, contentStore, configuration);
 
-        assertThat(renderResponse).isEqualTo(0);
-    }
+    assertThat(renderResponse).isEqualTo(0);
+  }
 
-    @Test
-    public void doesNotRenderWhenConfigDoesNotRenderFeeds() throws Exception {
-        FeedRenderer renderer = new FeedRenderer();
+  @Test
+  public void doesNotRenderWhenConfigDoesNotRenderFeeds() throws Exception {
+    FeedRenderer renderer = new FeedRenderer();
 
-        JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
-        when(configuration.getRenderFeed()).thenReturn(false);
+    JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
+    when(configuration.getRenderFeed()).thenReturn(false);
 
-        ContentStore contentStore = mock(ContentStore.class);
-        Renderer mockRenderer = mock(Renderer.class);
+    ContentStore contentStore = mock(ContentStore.class);
+    Renderer mockRenderer = mock(Renderer.class);
 
-        renderer.render(mockRenderer, contentStore, configuration);
+    renderer.render(mockRenderer, contentStore, configuration);
 
-        verify(mockRenderer, never()).renderFeed(anyString());
-    }
+    verify(mockRenderer, never()).renderFeed(anyString());
+  }
 
-    @Test
-    public void returnsOneWhenConfigRendersFeeds() throws RenderingException {
-        FeedRenderer renderer = new FeedRenderer();
+  @Test
+  public void returnsOneWhenConfigRendersFeeds() throws RenderingException {
+    FeedRenderer renderer = new FeedRenderer();
 
-        JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
-        when(configuration.getRenderFeed()).thenReturn(true);
+    JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
+    when(configuration.getRenderFeed()).thenReturn(true);
 
-        ContentStore contentStore = mock(ContentStore.class);
+    ContentStore contentStore = mock(ContentStore.class);
 
-        Renderer mockRenderer = mock(Renderer.class);
+    Renderer mockRenderer = mock(Renderer.class);
 
-        int renderResponse = renderer.render(mockRenderer, contentStore, configuration);
+    int renderResponse = renderer.render(mockRenderer, contentStore, configuration);
 
-        assertThat(renderResponse).isEqualTo(1);
-    }
+    assertThat(renderResponse).isEqualTo(1);
+  }
 
-    @Test
-    public void doesRenderWhenConfigDoesRenderFeeds() throws Exception {
-        FeedRenderer renderer = new FeedRenderer();
-        JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
-        when(configuration.getRenderFeed()).thenReturn(true);
-        when(configuration.getFeedFileName()).thenReturn("mockfeedfile.xml");
+  @Test
+  public void doesRenderWhenConfigDoesRenderFeeds() throws Exception {
+    FeedRenderer renderer = new FeedRenderer();
+    JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
+    when(configuration.getRenderFeed()).thenReturn(true);
+    when(configuration.getFeedFileName()).thenReturn("mockfeedfile.xml");
 
-        ContentStore contentStore = mock(ContentStore.class);
-        Renderer mockRenderer = mock(Renderer.class);
+    ContentStore contentStore = mock(ContentStore.class);
+    Renderer mockRenderer = mock(Renderer.class);
 
-        renderer.render(mockRenderer, contentStore, configuration);
+    renderer.render(mockRenderer, contentStore, configuration);
 
-        verify(mockRenderer, times(1)).renderFeed(anyString());
-    }
+    verify(mockRenderer, times(1)).renderFeed(anyString());
+  }
 
-    @Test(expected = RenderingException.class)
-    public void propogatesRenderingException() throws Exception {
-        FeedRenderer renderer = new FeedRenderer();
+  @Test(expected = RenderingException.class)
+  public void propogatesRenderingException() throws Exception {
+    FeedRenderer renderer = new FeedRenderer();
 
-        JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
-        when(configuration.getRenderFeed()).thenReturn(true);
-        when(configuration.getFeedFileName()).thenReturn("mockfeedfile.xml");
+    JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
+    when(configuration.getRenderFeed()).thenReturn(true);
+    when(configuration.getFeedFileName()).thenReturn("mockfeedfile.xml");
 
-        ContentStore contentStore = mock(ContentStore.class);
-        Renderer mockRenderer = mock(Renderer.class);
+    ContentStore contentStore = mock(ContentStore.class);
+    Renderer mockRenderer = mock(Renderer.class);
 
-        doThrow(new Exception()).when(mockRenderer).renderFeed(anyString());
+    doThrow(new Exception()).when(mockRenderer).renderFeed(anyString());
 
-        renderer.render(mockRenderer, contentStore, configuration);
+    renderer.render(mockRenderer, contentStore, configuration);
 
-        verify(mockRenderer, never()).renderFeed("random string");
-    }
+    verify(mockRenderer, never()).renderFeed("random string");
+  }
 
 }
 

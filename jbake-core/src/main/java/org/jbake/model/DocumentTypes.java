@@ -16,50 +16,50 @@ import java.util.Set;
  */
 public class DocumentTypes {
 
-    private static final Set<String> DEFAULT_DOC_TYPES = new LinkedHashSet<>();
-    private static final Set<DocumentTypeListener> LISTENERS = new HashSet<>();
+  private static final Set<String> DEFAULT_DOC_TYPES = new LinkedHashSet<>();
+  private static final Set<DocumentTypeListener> LISTENERS = new HashSet<>();
 
-    static {
-        resetDocumentTypes();
+  static {
+    resetDocumentTypes();
+  }
+
+  private DocumentTypes() {
+  }
+
+  public static void resetDocumentTypes() {
+    DEFAULT_DOC_TYPES.clear();
+    DEFAULT_DOC_TYPES.addAll(Arrays.asList("page", "post", "masterindex", "archive", "feed"));
+  }
+
+
+  public static void addDocumentType(String docType) {
+    DEFAULT_DOC_TYPES.add(docType);
+    notifyListener(docType);
+  }
+
+  private static void notifyListener(String docType) {
+    for (DocumentTypeListener listener : LISTENERS) {
+      listener.added(docType);
     }
+  }
 
-    private DocumentTypes() {
-    }
+  public static void addListener(DocumentTypeListener listener) {
+    LISTENERS.add(listener);
+  }
 
-    public static void resetDocumentTypes() {
-        DEFAULT_DOC_TYPES.clear();
-        DEFAULT_DOC_TYPES.addAll(Arrays.asList("page", "post", "masterindex", "archive", "feed"));
-    }
+  /**
+   * Notice additional document types are added automagically before returning them
+   *
+   * @return all supported document types
+   */
+  public static String[] getDocumentTypes() {
+    // TODO: is this needed?
+    // make sure engines are loaded before to get document types
+    Engines.getRecognizedExtensions();
+    return DEFAULT_DOC_TYPES.toArray(new String[DEFAULT_DOC_TYPES.size()]);
+  }
 
-
-    public static void addDocumentType(String docType) {
-        DEFAULT_DOC_TYPES.add(docType);
-        notifyListener(docType);
-    }
-
-    private static void notifyListener(String docType) {
-        for (DocumentTypeListener listener : LISTENERS) {
-            listener.added(docType);
-        }
-    }
-
-    public static void addListener(DocumentTypeListener listener) {
-        LISTENERS.add(listener);
-    }
-
-    /**
-     * Notice additional document types are added automagically before returning them
-     *
-     * @return all supported document types
-     */
-    public static String[] getDocumentTypes() {
-        // TODO: is this needed?
-        // make sure engines are loaded before to get document types
-        Engines.getRecognizedExtensions();
-        return DEFAULT_DOC_TYPES.toArray(new String[DEFAULT_DOC_TYPES.size()]);
-    }
-
-    public static boolean contains(String documentType) {
-        return DEFAULT_DOC_TYPES.contains(documentType);
-    }
+  public static boolean contains(String documentType) {
+    return DEFAULT_DOC_TYPES.contains(documentType);
+  }
 }

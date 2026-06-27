@@ -2,5 +2,5 @@ package org.jbake.model;
 
 public interface DocumentTypeListener {
 
-    void added(String doctype);
+  void added(String doctype);
 }

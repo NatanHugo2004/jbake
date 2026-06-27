@@ -11,10 +11,10 @@ import java.io.File;
 public interface RenderingTool {
 
 
-    int render(Renderer renderer, ContentStore db, JBakeConfiguration config) throws RenderingException;
+  int render(Renderer renderer, ContentStore db, JBakeConfiguration config) throws RenderingException;
 
-    @Deprecated
+  @Deprecated
     //TODO: remove at 3.0.0
-    int render(Renderer renderer, ContentStore db, File destination, File templatesPath, CompositeConfiguration config) throws RenderingException;
+  int render(Renderer renderer, ContentStore db, File destination, File templatesPath, CompositeConfiguration config) throws RenderingException;
 
 }

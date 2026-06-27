@@ -9,16 +9,16 @@ import java.util.Map;
 
 public class TypedDocumentsExtractor implements ModelExtractor<DocumentList> {
 
-    @Override
-    public DocumentList get(ContentStore db, Map model, String key) {
-        // document types are pluralized in model, so unpluralize
-        try {
-            String type = DocumentTypeUtils.unpluralize(key);
-            return db.getAllContent(type);
-        } catch (UnsupportedOperationException e) {
+  @Override
+  public DocumentList get(ContentStore db, Map model, String key) {
+    // document types are pluralized in model, so unpluralize
+    try {
+      String type = DocumentTypeUtils.unpluralize(key);
+      return db.getAllContent(type);
+    } catch (UnsupportedOperationException e) {
 
-            return new DocumentList();
-        }
+      return new DocumentList();
     }
+  }
 
 }

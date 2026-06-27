@@ -14,14 +14,14 @@ import java.util.LinkedList;
  */
 public class DocumentList<T> extends LinkedList<T> {
 
-    public static DocumentList<DocumentModel> wrap(OResultSet docs) {
-        DocumentList<DocumentModel> list = new DocumentList<>();
-        while (docs.hasNext()) {
-            OResult next = docs.next();
-            list.add(DBUtil.documentToModel(next));
-        }
-        docs.close();
-        return list;
+  public static DocumentList<DocumentModel> wrap(OResultSet docs) {
+    DocumentList<DocumentModel> list = new DocumentList<>();
+    while (docs.hasNext()) {
+      OResult next = docs.next();
+      list.add(DBUtil.documentToModel(next));
     }
+    docs.close();
+    return list;
+  }
 
 }

@@ -29,22 +29,22 @@ import java.io.Writer;
  */
 public abstract class AbstractTemplateEngine {
 
-    protected static ModelExtractors extractors = ModelExtractors.getInstance();
-    protected final JBakeConfiguration config;
-    protected final ContentStore db;
+  protected static ModelExtractors extractors = ModelExtractors.getInstance();
+  protected final JBakeConfiguration config;
+  protected final ContentStore db;
 
-    /**
-     * @deprecated use {@link AbstractTemplateEngine(JBakeConfiguration,ContentStore)} instead
-     */
-    @Deprecated
-    protected AbstractTemplateEngine(final Configuration config, final ContentStore db, final File destination, final File templatesPath) {
-        this(new JBakeConfigurationFactory().createDefaultJbakeConfiguration(templatesPath.getParentFile(), destination, (CompositeConfiguration) config), db);
-    }
+  /**
+   * @deprecated use {@link AbstractTemplateEngine(JBakeConfiguration,ContentStore)} instead
+   */
+  @Deprecated
+  protected AbstractTemplateEngine(final Configuration config, final ContentStore db, final File destination, final File templatesPath) {
+    this(new JBakeConfigurationFactory().createDefaultJbakeConfiguration(templatesPath.getParentFile(), destination, (CompositeConfiguration) config), db);
+  }
 
-    protected AbstractTemplateEngine(final JBakeConfiguration config, final ContentStore db) {
-        this.config = config;
-        this.db = db;
-    }
+  protected AbstractTemplateEngine(final JBakeConfiguration config, final ContentStore db) {
+    this.config = config;
+    this.db = db;
+  }
 
-    public abstract void renderDocument(TemplateModel model, String templateName, Writer writer) throws RenderingException;
+  public abstract void renderDocument(TemplateModel model, String templateName, Writer writer) throws RenderingException;
 }

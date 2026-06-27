@@ -17,40 +17,40 @@ import static org.junit.Assert.assertFalse;
  */
 public class FileUtilTest {
 
-    @Test
-    public void testGetRunningLocation() throws Exception {
+  @Test
+  public void testGetRunningLocation() throws Exception {
 
-        File path = FileUtil.getRunningLocation();
-        assertEquals(new File("build/classes").getAbsolutePath(), path.getPath());
-    }
+    File path = FileUtil.getRunningLocation();
+    assertEquals(new File("build/classes").getAbsolutePath(), path.getPath());
+  }
 
-    @Test
-    public void testIsFileInDirectory() throws Exception {
-        File fixtureDir = new File(this.getClass().getResource("/fixture").getFile());
-        File jbakeFile = new File(fixtureDir.getCanonicalPath() + File.separatorChar + "jbake.properties");
-        assertTrue("jbake.properties expected to be in /fixture directory", FileUtil.isFileInDirectory(jbakeFile, fixtureDir));
+  @Test
+  public void testIsFileInDirectory() throws Exception {
+    File fixtureDir = new File(this.getClass().getResource("/fixture").getFile());
+    File jbakeFile = new File(fixtureDir.getCanonicalPath() + File.separatorChar + "jbake.properties");
+    assertTrue("jbake.properties expected to be in /fixture directory", FileUtil.isFileInDirectory(jbakeFile, fixtureDir));
 
-        File contentFile = new File(fixtureDir.getCanonicalPath() + File.separatorChar + "content" + File.separatorChar + "projects.html");
-        assertTrue("projects.html expected to be nested in the /fixture directory", FileUtil.isFileInDirectory(contentFile, fixtureDir));
+    File contentFile = new File(fixtureDir.getCanonicalPath() + File.separatorChar + "content" + File.separatorChar + "projects.html");
+    assertTrue("projects.html expected to be nested in the /fixture directory", FileUtil.isFileInDirectory(contentFile, fixtureDir));
 
-        File contentDir = contentFile.getParentFile();
-        assertFalse("jbake.properties file should not be in the /fixture/content directory", FileUtil.isFileInDirectory(jbakeFile, contentDir));
-    }
+    File contentDir = contentFile.getParentFile();
+    assertFalse("jbake.properties file should not be in the /fixture/content directory", FileUtil.isFileInDirectory(jbakeFile, contentDir));
+  }
 
-    @Test
-    public void testGetContentRoothPath() throws Exception {
+  @Test
+  public void testGetContentRoothPath() throws Exception {
 
-        File source = TestUtils.getTestResourcesAsSourceFolder();
-        ConfigUtil util = new ConfigUtil();
-        DefaultJBakeConfiguration config = (DefaultJBakeConfiguration) util.loadConfig(source);
+    File source = TestUtils.getTestResourcesAsSourceFolder();
+    ConfigUtil util = new ConfigUtil();
+    DefaultJBakeConfiguration config = (DefaultJBakeConfiguration) util.loadConfig(source);
 
-        String path = FileUtil.getUriPathToContentRoot(config, new File(config.getContentFolder(), "index.html"));
-        assertThat(path).isEqualTo("");
+    String path = FileUtil.getUriPathToContentRoot(config, new File(config.getContentFolder(), "index.html"));
+    assertThat(path).isEqualTo("");
 
-        path = FileUtil.getUriPathToContentRoot(config, new File(config.getContentFolder(), "/blog/index.html"));
-        assertThat(path).isEqualTo("../");
+    path = FileUtil.getUriPathToContentRoot(config, new File(config.getContentFolder(), "/blog/index.html"));
+    assertThat(path).isEqualTo("../");
 
-        path = FileUtil.getUriPathToContentRoot(config, new File(config.getContentFolder(), "/blog/level2/index.html"));
-        assertThat(path).isEqualTo("../../");
-    }
+    path = FileUtil.getUriPathToContentRoot(config, new File(config.getContentFolder(), "/blog/level2/index.html"));
+    assertThat(path).isEqualTo("../../");
+  }
 }

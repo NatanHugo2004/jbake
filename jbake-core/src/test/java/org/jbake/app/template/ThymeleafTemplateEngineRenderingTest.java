@@ -27,10 +27,10 @@ package org.jbake.app.template;
  *
  * @author jdlee
  */
-public class ThymeleafTemplateEngineRenderingTest extends AbstractTemplateEngineRenderingTest{
+public class ThymeleafTemplateEngineRenderingTest extends AbstractTemplateEngineRenderingTest {
 
-    public ThymeleafTemplateEngineRenderingTest() {
-        super("thymeleafTemplates", "thyme");
-    }
+  public ThymeleafTemplateEngineRenderingTest() {
+    super("thymeleafTemplates", "thyme");
+  }
 
 }

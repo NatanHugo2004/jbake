@@ -24,53 +24,53 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(MockitoJUnitRunner.class)
 public class RendererTest {
 
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
-    private DefaultJBakeConfiguration config;
-    private File outputPath;
+  @Rule
+  public TemporaryFolder folder = new TemporaryFolder();
+  private DefaultJBakeConfiguration config;
+  private File outputPath;
 
-    @Mock
-    private ContentStore db;
+  @Mock
+  private ContentStore db;
 
-    @Mock
-    private DelegatingTemplateEngine renderingEngine;
+  @Mock
+  private DelegatingTemplateEngine renderingEngine;
 
-    @Before
-    public void setup() throws Exception {
+  @Before
+  public void setup() throws Exception {
 
-        File sourcePath = TestUtils.getTestResourcesAsSourceFolder();
-        if (!sourcePath.exists()) {
-            throw new Exception("Cannot find base path for test!");
-        }
-        outputPath = folder.newFolder("output");
-        config = (DefaultJBakeConfiguration) new ConfigUtil().loadConfig(sourcePath);
-        config.setDestinationFolder(outputPath);
+    File sourcePath = TestUtils.getTestResourcesAsSourceFolder();
+    if (!sourcePath.exists()) {
+      throw new Exception("Cannot find base path for test!");
     }
+    outputPath = folder.newFolder("output");
+    config = (DefaultJBakeConfiguration) new ConfigUtil().loadConfig(sourcePath);
+    config.setDestinationFolder(outputPath);
+  }
 
-    /**
-     * See issue #300
-     *
-     * @throws Exception
-     */
-    @Test
-    public void testRenderFileWorksWhenPathHasDotInButFileDoesNot() throws Exception {
+  /**
+   * See issue #300
+   *
+   * @throws Exception
+   */
+  @Test
+  public void testRenderFileWorksWhenPathHasDotInButFileDoesNot() throws Exception {
 
-        Assume.assumeFalse("Ignore running on Windows", TestUtils.isWindows());
-        String FOLDER = "real.path";
+    Assume.assumeFalse("Ignore running on Windows", TestUtils.isWindows());
+    String FOLDER = "real.path";
 
-        final String FILENAME = "about";
-        config.setOutputExtension("");
-        config.setTemplateFolder(folder.newFolder("templates"));
-        Renderer renderer = new Renderer(db, config, renderingEngine);
+    final String FILENAME = "about";
+    config.setOutputExtension("");
+    config.setTemplateFolder(folder.newFolder("templates"));
+    Renderer renderer = new Renderer(db, config, renderingEngine);
 
-        DocumentModel content = new DocumentModel();
-        content.setType("page");
-        content.setUri("/" + FOLDER + "/" + FILENAME);
-        content.setStatus("published");
+    DocumentModel content = new DocumentModel();
+    content.setType("page");
+    content.setUri("/" + FOLDER + "/" + FILENAME);
+    content.setStatus("published");
 
-        renderer.render(content);
+    renderer.render(content);
 
-        File outputFile = new File(outputPath.getAbsolutePath() + File.separatorChar + FOLDER + File.separatorChar + FILENAME);
-        assertThat(outputFile).isFile();
-    }
+    File outputFile = new File(outputPath.getAbsolutePath() + File.separatorChar + FOLDER + File.separatorChar + FILENAME);
+    assertThat(outputFile).isFile();
+  }
 }
