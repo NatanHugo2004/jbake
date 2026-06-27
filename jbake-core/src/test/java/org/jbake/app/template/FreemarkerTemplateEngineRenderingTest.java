@@ -39,48 +39,48 @@ import static org.junit.Assert.assertTrue;
  */
 public class FreemarkerTemplateEngineRenderingTest extends AbstractTemplateEngineRenderingTest {
 
-    public FreemarkerTemplateEngineRenderingTest() {
-        super("freemarkerTemplates", "ftl");
+  public FreemarkerTemplateEngineRenderingTest() {
+    super("freemarkerTemplates", "ftl");
+  }
+
+  @Test
+  public void renderPaginatedIndex() throws Exception {
+    config.setPaginateIndex(true);
+    config.setPostsPerPage(1);
+
+    outputStrings.put("index", Arrays.asList(
+      "\">Previous</a>",
+      "3/\">Next</a>",
+      "2 of 3"
+    ));
+
+    renderer.renderIndexPaging("index.html");
+
+    File outputFile = new File(destinationFolder, 2 + File.separator + "index.html");
+    String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
+
+    for (String string : getOutputStrings("index")) {
+      assertThat(output).contains(string);
     }
 
-    @Test
-    public void renderPaginatedIndex() throws Exception {
-        config.setPaginateIndex(true);
-        config.setPostsPerPage(1);
+    assertThat(output).contains("Post Url: blog%2F2013%2Fsecond-post.html");
+  }
 
-        outputStrings.put("index", Arrays.asList(
-                "\">Previous</a>",
-                "3/\">Next</a>",
-                "2 of 3"
-        ));
+  @Test
+  public void shouldFallbackToRenderSingleIndexIfNoPostArePresent() throws Exception {
+    config.setPaginateIndex(true);
+    config.setPostsPerPage(1);
 
-        renderer.renderIndexPaging("index.html");
+    db.deleteAllByDocType("post");
 
-        File outputFile = new File(destinationFolder, 2 + File.separator + "index.html");
-        String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
+    renderer.renderIndexPaging("index.html");
 
-        for (String string : getOutputStrings("index")) {
-            assertThat(output).contains(string);
-        }
+    File paginatedFile = new File(destinationFolder, "index2.html");
+    assertFalse("paginated file is not rendered", paginatedFile.exists());
 
-        assertThat(output).contains("Post Url: blog%2F2013%2Fsecond-post.html");
-    }
+    File indexFile = new File(destinationFolder, "index.html");
+    assertTrue("index file exists", indexFile.exists());
 
-    @Test
-    public void shouldFallbackToRenderSingleIndexIfNoPostArePresent() throws Exception {
-        config.setPaginateIndex(true);
-        config.setPostsPerPage(1);
-
-        db.deleteAllByDocType("post");
-
-        renderer.renderIndexPaging("index.html");
-
-        File paginatedFile = new File(destinationFolder, "index2.html");
-        assertFalse("paginated file is not rendered", paginatedFile.exists());
-
-        File indexFile = new File(destinationFolder, "index.html");
-        assertTrue("index file exists", indexFile.exists());
-
-    }
+  }
 
 }

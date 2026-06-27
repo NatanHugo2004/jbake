@@ -7,7 +7,7 @@ package org.jbake.model;
  * @author Cédric Champeau
  */
 public enum DocumentStatus {
-    NEW,
-    UPDATED,
-    IDENTICAL
+  NEW,
+  UPDATED,
+  IDENTICAL
 }

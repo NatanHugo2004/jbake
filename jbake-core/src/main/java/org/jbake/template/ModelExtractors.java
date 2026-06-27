@@ -35,125 +35,137 @@ import java.util.TreeMap;
  * @author Cédric Champeau
  */
 public class ModelExtractors {
-    private static final String PROPERTIES = "META-INF/org.jbake.template.ModelExtractors.properties";
+  private static final String PROPERTIES = "META-INF/org.jbake.template.ModelExtractors.properties";
 
-    private final static Logger LOGGER = LoggerFactory.getLogger(ModelExtractors.class);
+  private final static Logger LOGGER = LoggerFactory.getLogger(ModelExtractors.class);
 
-    private final Map<String, ModelExtractor> extractors;
+  private final Map<String, ModelExtractor> extractors;
 
-    private static class Loader {
-        private static final ModelExtractors INSTANCE = new ModelExtractors();
+  private static class Loader {
+    private static final ModelExtractors INSTANCE = new ModelExtractors();
+  }
+
+  public static ModelExtractors getInstance() {
+    return Loader.INSTANCE;
+  }
+
+  private ModelExtractors() {
+    extractors = new TreeMap<String, ModelExtractor>();
+    loadEngines();
+  }
+
+  public void reset() {
+    extractors.clear();
+    loadEngines();
+  }
+
+  /**
+   * Registers a model extractor with the specified key.
+   *
+   * @param key the key under which the extractor will be registered
+   * @param extractor the model extractor to register
+   */
+
+  public void registerEngine(String key, ModelExtractor extractor) {
+    ModelExtractor old = extractors.put(key, extractor);
+    if (old != null) {
+      LOGGER.warn("Registered a model extractor for key [.{}] but another one was already defined: {}", key, old);
     }
+  }
 
-    public static ModelExtractors getInstance() {
-        return Loader.INSTANCE;
+  /**
+   * This method is used to search for a specific class, telling if loading the engine would succeed. This is
+   * typically used to avoid loading optional modules.
+   *
+   * @param engineClassName engine class, used both as a hint to find it and to create the engine itself.  @return null if the engine is not available, an instance of the engine otherwise
+   */
+  private static ModelExtractor tryLoadEngine(String engineClassName) {
+    try {
+      @SuppressWarnings("unchecked")
+      Class<? extends ModelExtractor> engineClass = (Class<? extends ModelExtractor>) Class.forName(engineClassName, false, ModelExtractors.class.getClassLoader());
+      return engineClass.newInstance();
+    } catch (ClassNotFoundException e) {
+      return null;
+    } catch (InstantiationException e) {
+      return null;
+    } catch (IllegalAccessException e) {
+      return null;
+    } catch (NoClassDefFoundError e) {
+      // a dependency of the engine may not be found on classpath
+      return null;
     }
+  }
 
-    private ModelExtractors() {
-        extractors = new TreeMap<String, ModelExtractor>();
-        loadEngines();
-    }
-
-    public void reset() {
-        extractors.clear();
-        loadEngines();
-    }
-
-    public void registerEngine(String key, ModelExtractor extractor) {
-        ModelExtractor old = extractors.put(key, extractor);
-        if (old != null) {
-            LOGGER.warn("Registered a model extractor for key [.{}] but another one was already defined: {}", key, old);
+  /**
+   * This method is used internally to load markup engines. Markup engines are found using descriptor files on
+   * classpath, so adding an engine is as easy as adding a jar on classpath with the descriptor file included.
+   */
+  private void loadEngines() {
+    try {
+      ClassLoader cl = ModelExtractors.class.getClassLoader();
+      Enumeration<URL> resources = cl.getResources(PROPERTIES);
+      while (resources.hasMoreElements()) {
+        URL url = resources.nextElement();
+        Properties props = new Properties();
+        props.load(url.openStream());
+        for (Map.Entry<Object, Object> entry : props.entrySet()) {
+          String className = (String) entry.getKey();
+          String[] extensions = ((String) entry.getValue()).split(",");
+          loadAndRegisterEngine(className, extensions);
         }
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
     }
+  }
 
-    /**
-     * This method is used to search for a specific class, telling if loading the engine would succeed. This is
-     * typically used to avoid loading optional modules.
-     *
-     * @param engineClassName engine class, used both as a hint to find it and to create the engine itself.  @return null if the engine is not available, an instance of the engine otherwise
-     */
-    private static ModelExtractor tryLoadEngine(String engineClassName) {
-        try {
-            @SuppressWarnings("unchecked")
-            Class<? extends ModelExtractor> engineClass = (Class<? extends ModelExtractor>) Class.forName(engineClassName, false, ModelExtractors.class.getClassLoader());
-            return engineClass.newInstance();
-        } catch (ClassNotFoundException e) {
-            return null;
-        } catch (InstantiationException e) {
-            return null;
-        } catch (IllegalAccessException e) {
-            return null;
-        } catch (NoClassDefFoundError e) {
-            // a dependency of the engine may not be found on classpath
-            return null;
-        }
+  private void loadAndRegisterEngine(String className, String... extensions) {
+    ModelExtractor engine = tryLoadEngine(className);
+    if (engine != null) {
+      for (String extension : extensions) {
+        registerEngine(extension, engine);
+      }
     }
+  }
 
-    /**
-     * This method is used internally to load markup engines. Markup engines are found using descriptor files on
-     * classpath, so adding an engine is as easy as adding a jar on classpath with the descriptor file included.
-     */
-    private void loadEngines() {
-        try {
-            ClassLoader cl = ModelExtractors.class.getClassLoader();
-            Enumeration<URL> resources = cl.getResources(PROPERTIES);
-            while (resources.hasMoreElements()) {
-                URL url = resources.nextElement();
-                Properties props = new Properties();
-                props.load(url.openStream());
-                for (Map.Entry<Object, Object> entry : props.entrySet()) {
-                    String className = (String) entry.getKey();
-                    String[] extensions = ((String) entry.getValue()).split(",");
-                    loadAndRegisterEngine(className, extensions);
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+  public <Type> Type extractAndTransform(ContentStore db, String key, Map map, TemplateEngineAdapter<Type> adapter) throws NoModelExtractorException {
+    if (extractors.containsKey(key)) {
+      Object extractedValue = extractors.get(key).get(db, map, key);
+      return adapter.adapt(key, extractedValue);
+    } else {
+      throw new NoModelExtractorException("no model extractor for key \"" + key + "\"");
     }
+  }
 
-    private void loadAndRegisterEngine(String className, String... extensions) {
-        ModelExtractor engine = tryLoadEngine(className);
-        if (engine != null) {
-            for (String extension : extensions) {
-                registerEngine(extension, engine);
-            }
-        }
-    }
+  /**
+   * @param key A key a {@link ModelExtractor} is registered with
+   * @return true if key is registered
+   * @see java.util.Map#containsKey(java.lang.Object)
+   */
+  public boolean containsKey(Object key) {
+    return extractors.containsKey(key);
+  }
 
-    public <Type> Type extractAndTransform(ContentStore db, String key, Map map, TemplateEngineAdapter<Type> adapter) throws NoModelExtractorException {
-        if (extractors.containsKey(key)) {
-            Object extractedValue = extractors.get(key).get(db, map, key);
-            return adapter.adapt(key, extractedValue);
-        } else {
-            throw new NoModelExtractorException("no model extractor for key \"" + key + "\"");
-        }
-    }
+  /**
+   * @return A @{@link Set} of all known keys a @{@link ModelExtractor} is registered with
+   * @see java.util.Map#keySet()
+   */
+  public Set<String> keySet() {
+    return extractors.keySet();
+  }
 
-    /**
-     * @see java.util.Map#containsKey(java.lang.Object)
-     * @param key A key a {@link ModelExtractor} is registered with
-     * @return true if key is registered
-     */
-    public boolean containsKey(Object key) {
-        return extractors.containsKey(key);
+  /**
+   * Registers extractors for custom document types.
+   *
+   * @param docType the document type to register extractors for
+   */
+  public void registerExtractorsForCustomTypes(String docType) {
+    String pluralizedDoctype = DocumentTypeUtils.pluralize(docType);
+    if (!containsKey(pluralizedDoctype)) {
+      LOGGER.info("register new extractors for document type: {}", docType);
+      registerEngine(pluralizedDoctype, new TypedDocumentsExtractor());
+      registerEngine("published_" + pluralizedDoctype, new PublishedCustomExtractor(docType));
     }
-
-    /**
-     * @return  A @{@link Set} of all known keys a @{@link ModelExtractor} is registered with
-     * @see java.util.Map#keySet()
-     */
-    public Set<String> keySet() {
-        return extractors.keySet();
-    }
-
-    public void registerExtractorsForCustomTypes(String docType) {
-        String pluralizedDoctype = DocumentTypeUtils.pluralize(docType);
-        if (!containsKey(pluralizedDoctype)) {
-            LOGGER.info("register new extractors for document type: {}", docType);
-            registerEngine(pluralizedDoctype, new TypedDocumentsExtractor());
-            registerEngine("published_" + pluralizedDoctype, new PublishedCustomExtractor(docType));
-        }
-    }
+  }
 
 }

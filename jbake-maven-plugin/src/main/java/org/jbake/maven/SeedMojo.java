@@ -40,82 +40,82 @@ import static org.apache.commons.lang3.StringUtils.join;
  */
 @Mojo(name = "seed", requiresProject = true, requiresDirectInvocation = true)
 public class SeedMojo extends AbstractMojo {
-	/**
-	 * Location of the Seeding Zip
-	 */
-	@Parameter(property = "jbake.seedUrl", defaultValue = "https://github.com/jbake-org/jbake-template-bootstrap/zipball/master/", required = true)
-	protected String seedUrl;
+  /**
+   * Location of the Seeding Zip
+   */
+  @Parameter(property = "jbake.seedUrl", defaultValue = "https://github.com/jbake-org/jbake-template-bootstrap/zipball/master/", required = true)
+  protected String seedUrl;
 
-	/**
-	 * Location of the Output Directory.
-	 */
-	@Parameter(property = "jbake.outputDirectory", defaultValue = "${project.basedir}/src/main/jbake", required = true)
-	protected File outputDirectory;
+  /**
+   * Location of the Output Directory.
+   */
+  @Parameter(property = "jbake.outputDirectory", defaultValue = "${project.basedir}/src/main/jbake", required = true)
+  protected File outputDirectory;
 
-    /**
-     * Really force overwrite if output dir exists? defaults to false
-     */
-    @Parameter(property = "jbake.force", defaultValue = "false")
-    protected Boolean force;
+  /**
+   * Really force overwrite if output dir exists? defaults to false
+   */
+  @Parameter(property = "jbake.force", defaultValue = "false")
+  protected Boolean force;
 
-    public void execute() throws MojoExecutionException {
-        if (outputDirectory.exists() && (! force))
-            throw new MojoExecutionException(format("The outputDirectory %s must *NOT* exist. Invoke with jbake.force as true to disregard", outputDirectory.getName()));
+  public void execute() throws MojoExecutionException {
+    if (outputDirectory.exists() && (!force))
+      throw new MojoExecutionException(format("The outputDirectory %s must *NOT* exist. Invoke with jbake.force as true to disregard", outputDirectory.getName()));
 
-		try {
-            URL url = new URL(seedUrl);
-            File tmpZipFile = File.createTempFile("jbake", ".zip");
+    try {
+      URL url = new URL(seedUrl);
+      File tmpZipFile = File.createTempFile("jbake", ".zip");
 
-            getLog().info(format("Downloading contents from %s into %s", seedUrl, tmpZipFile));
+      getLog().info(format("Downloading contents from %s into %s", seedUrl, tmpZipFile));
 
-            final FileOutputStream fos = new FileOutputStream(tmpZipFile);
-            int length = IOUtils.copy(url.openStream(), fos);
+      final FileOutputStream fos = new FileOutputStream(tmpZipFile);
+      int length = IOUtils.copy(url.openStream(), fos);
 
-            fos.close();
+      fos.close();
 
-            getLog().info(format("%d bytes downloaded. Unpacking into %s", length, outputDirectory));
+      getLog().info(format("%d bytes downloaded. Unpacking into %s", length, outputDirectory));
 
-            unpackZip(tmpZipFile);
-		} catch (Exception e) {
-			getLog().info("Oops", e);
-			throw new MojoExecutionException("Failure when running: ", e);
-		}
-	}
+      unpackZip(tmpZipFile);
+    } catch (Exception e) {
+      getLog().info("Oops", e);
+      throw new MojoExecutionException("Failure when running: ", e);
+    }
+  }
 
-    private void unpackZip(File tmpZipFile) throws IOException {
-        ZipInputStream zis =
-                new ZipInputStream(new FileInputStream(tmpZipFile));
-        //get the zipped file list entry
-        ZipEntry ze = zis.getNextEntry();
+  private void unpackZip(File tmpZipFile) throws IOException {
+    ZipInputStream zis =
+      new ZipInputStream(new FileInputStream(tmpZipFile));
+    //get the zipped file list entry
+    ZipEntry ze = zis.getNextEntry();
 
-        while(ze!=null){
-            if (ze.isDirectory()) {
-                ze = zis.getNextEntry();
-                continue;
-            }
+    while (ze != null) {
+      if (ze.isDirectory()) {
+        ze = zis.getNextEntry();
+        continue;
+      }
 
-            String fileName = stripLeadingPath(ze.getName());
-            File newFile = new File(outputDirectory + File.separator + fileName);
+      String fileName = stripLeadingPath(ze.getName());
+      File newFile = new File(outputDirectory + File.separator + fileName);
 
-            new File(newFile.getParent()).mkdirs();
+      new File(newFile.getParent()).mkdirs();
 
-            FileOutputStream fos = new FileOutputStream(newFile);
+      FileOutputStream fos = new FileOutputStream(newFile);
 
-            IOUtils.copy(zis, fos);
+      IOUtils.copy(zis, fos);
 
-            fos.close();
-            ze = zis.getNextEntry();
-        }
-
-        zis.closeEntry();
-        zis.close();
+      fos.close();
+      ze = zis.getNextEntry();
     }
 
-    private String stripLeadingPath(String name) {
-        LinkedList<String> elements = new LinkedList<>(asList(name.split("/")));
+    zis.closeEntry();
+    zis.close();
+  }
 
-        elements.pop();
+  private String stripLeadingPath(String name) {
+    LinkedList<String> elements = new LinkedList<>(asList(name.split("/")));
 
-        return join(elements.iterator(), '/');
-    }
+    elements.pop();
+
+    return join(elements.iterator(), '/');
+  }
 }

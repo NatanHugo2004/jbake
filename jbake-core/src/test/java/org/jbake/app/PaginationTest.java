@@ -41,54 +41,54 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class PaginationTest extends ContentStoreIntegrationTest {
 
-    @Before
-    public void setUpOwn() {
-        for (String docType : DocumentTypes.getDocumentTypes()) {
-            String fileBaseName = docType;
-            if (docType.equals("masterindex")) {
-                fileBaseName = "index";
-            }
-            config.setTemplateFileNameForDocType(docType, fileBaseName + ".ftl");
-        }
-
-        config.setPaginateIndex(true);
-        config.setPostsPerPage(1);
+  @Before
+  public void setUpOwn() {
+    for (String docType : DocumentTypes.getDocumentTypes()) {
+      String fileBaseName = docType;
+      if (docType.equals("masterindex")) {
+        fileBaseName = "index";
+      }
+      config.setTemplateFileNameForDocType(docType, fileBaseName + ".ftl");
     }
 
-    @Test
-    public void testPagination() {
-        final int TOTAL_POSTS = 5;
-        final int PER_PAGE = 2;
-        Calendar cal = Calendar.getInstance(Locale.ENGLISH);
-        for (int i = 1; i <= TOTAL_POSTS; i++) {
-            cal.add(Calendar.SECOND, 5);
-            FakeDocumentBuilder builder = new FakeDocumentBuilder("post");
-            builder.withCached(true)
-                    .withStatus("published")
-                    .withDate(cal.getTime())
-                    .build();
-        }
+    config.setPaginateIndex(true);
+    config.setPostsPerPage(1);
+  }
 
-        int pageCount = 1;
-        int start = 0;
-        db.setLimit(PER_PAGE);
-
-        while (start < TOTAL_POSTS) {
-            db.setStart(start);
-            DocumentList posts = db.getPublishedPosts(true);
-
-            assertThat(posts.size()).isLessThanOrEqualTo(2);
-
-            if (posts.size() > 1) {
-                DocumentModel post = (DocumentModel) posts.get(0);
-                DocumentModel nextPost = (DocumentModel) posts.get(1);
-
-                assertThat(post.getDate()).isAfter(nextPost.getDate());
-            }
-
-            pageCount++;
-            start += PER_PAGE;
-        }
-        Assert.assertEquals(4, pageCount);
+  @Test
+  public void testPagination() {
+    final int TOTAL_POSTS = 5;
+    final int PER_PAGE = 2;
+    Calendar cal = Calendar.getInstance(Locale.ENGLISH);
+    for (int i = 1; i <= TOTAL_POSTS; i++) {
+      cal.add(Calendar.SECOND, 5);
+      FakeDocumentBuilder builder = new FakeDocumentBuilder("post");
+      builder.withCached(true)
+        .withStatus("published")
+        .withDate(cal.getTime())
+        .build();
     }
+
+    int pageCount = 1;
+    int start = 0;
+    db.setLimit(PER_PAGE);
+
+    while (start < TOTAL_POSTS) {
+      db.setStart(start);
+      DocumentList posts = db.getPublishedPosts(true);
+
+      assertThat(posts.size()).isLessThanOrEqualTo(2);
+
+      if (posts.size() > 1) {
+        DocumentModel post = (DocumentModel) posts.get(0);
+        DocumentModel nextPost = (DocumentModel) posts.get(1);
+
+        assertThat(post.getDate()).isAfter(nextPost.getDate());
+      }
+
+      pageCount++;
+      start += PER_PAGE;
+    }
+    Assert.assertEquals(4, pageCount);
+  }
 }

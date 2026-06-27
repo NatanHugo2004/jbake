@@ -15,114 +15,114 @@ import static org.junit.Assert.assertEquals;
 
 public class ContentStoreTest extends ContentStoreIntegrationTest {
 
-    public static final String DOC_TYPE_POST = "post";
+  public static final String DOC_TYPE_POST = "post";
 
-    @Test
-    public void shouldGetCountForPublishedDocuments() throws Exception {
+  @Test
+  public void shouldGetCountForPublishedDocuments() throws Exception {
 
-        for (int i = 0; i < 5; i++) {
-            FakeDocumentBuilder builder = new FakeDocumentBuilder(DOC_TYPE_POST);
-            builder.withStatus("published")
-                    .withRandomSha1()
-                    .build();
-        }
-
-        FakeDocumentBuilder builder = new FakeDocumentBuilder(DOC_TYPE_POST);
-        builder.withStatus("draft")
-                .withRandomSha1()
-                .build();
-
-        assertEquals(6, db.getDocumentCount(DOC_TYPE_POST));
-        assertEquals(5, db.getPublishedCount(DOC_TYPE_POST));
+    for (int i = 0; i < 5; i++) {
+      FakeDocumentBuilder builder = new FakeDocumentBuilder(DOC_TYPE_POST);
+      builder.withStatus("published")
+        .withRandomSha1()
+        .build();
     }
 
-    @Test
-    public void testStoreTypeWithSpecialCharacters() {
-        final String typeWithHyphen = "type-with-hyphen";
+    FakeDocumentBuilder builder = new FakeDocumentBuilder(DOC_TYPE_POST);
+    builder.withStatus("draft")
+      .withRandomSha1()
+      .build();
 
-        DocumentTypes.addDocumentType(typeWithHyphen);
+    assertEquals(6, db.getDocumentCount(DOC_TYPE_POST));
+    assertEquals(5, db.getPublishedCount(DOC_TYPE_POST));
+  }
 
-        final String tagWithHyphenBackslashAndBacktick = "identifier-with\\`backtick";
-        final String uri = "test/testMergeDocument";
+  @Test
+  public void testStoreTypeWithSpecialCharacters() {
+    final String typeWithHyphen = "type-with-hyphen";
 
-        DocumentModel model = DocumentModel.createDefaultDocumentModel();
-        model.setType(typeWithHyphen);
-        model.setTags(new String[]{tagWithHyphenBackslashAndBacktick});
-        model.setDate(new Date());
-        model.setSourceUri(uri);
-        model.put("foo", "originalValue");
+    DocumentTypes.addDocumentType(typeWithHyphen);
 
-        db.addDocument(model);
+    final String tagWithHyphenBackslashAndBacktick = "identifier-with\\`backtick";
+    final String uri = "test/testMergeDocument";
 
-        DocumentList<DocumentModel> documentList1 = db.getAllContent(typeWithHyphen);
+    DocumentModel model = DocumentModel.createDefaultDocumentModel();
+    model.setType(typeWithHyphen);
+    model.setTags(new String[]{tagWithHyphenBackslashAndBacktick});
+    model.setDate(new Date());
+    model.setSourceUri(uri);
+    model.put("foo", "originalValue");
 
-        assertEquals(1, documentList1.size());
+    db.addDocument(model);
 
-        DocumentList<DocumentModel> documentList2 = db.getAllContent(typeWithHyphen, true);
+    DocumentList<DocumentModel> documentList1 = db.getAllContent(typeWithHyphen);
 
-        assertEquals(1, documentList2.size());
+    assertEquals(1, documentList1.size());
 
-        DocumentList<DocumentModel> documentList3 =  db.getDocumentByUri(uri);
+    DocumentList<DocumentModel> documentList2 = db.getAllContent(typeWithHyphen, true);
 
-        assertEquals(1, documentList3.size());
+    assertEquals(1, documentList2.size());
 
-        long documentCount1 = db.getDocumentCount(typeWithHyphen);
+    DocumentList<DocumentModel> documentList3 = db.getDocumentByUri(uri);
 
-        assertEquals(1L, documentCount1);
+    assertEquals(1, documentList3.size());
 
-        DocumentList<DocumentModel> documentList4 = db.getDocumentStatus(uri);
+    long documentCount1 = db.getDocumentCount(typeWithHyphen);
 
-        assertEquals(1, documentList4.size());
-        assertEquals(Boolean.FALSE, documentList4.get(0).getRendered());
+    assertEquals(1L, documentCount1);
 
-        long documentCount2 = db.getPublishedCount(typeWithHyphen);
-        assertEquals(0, documentCount2);
+    DocumentList<DocumentModel> documentList4 = db.getDocumentStatus(uri);
 
-        DocumentModel published = new DocumentModel();
-        published.setSourceUri("test/another-testdocument.adoc");
-        published.setTags(new String[]{tagWithHyphenBackslashAndBacktick});
-        published.setType(typeWithHyphen);
-        published.setStatus(Status.PUBLISHED);
-        published.setCached(true);
-        published.setRendered(false);
+    assertEquals(1, documentList4.size());
+    assertEquals(Boolean.FALSE, documentList4.get(0).getRendered());
 
-        db.addDocument(published);
+    long documentCount2 = db.getPublishedCount(typeWithHyphen);
+    assertEquals(0, documentCount2);
 
-        DocumentList<DocumentModel> documentList5 = db.getUnrenderedContent();
-        assertEquals(2, documentList5.size());
-        assertEquals(Boolean.FALSE, documentList5.get(0).getRendered());
-        assertEquals(typeWithHyphen, documentList5.get(0).getType());
-        assertThat(documentList5.get(0).getTags()).contains(tagWithHyphenBackslashAndBacktick);
+    DocumentModel published = new DocumentModel();
+    published.setSourceUri("test/another-testdocument.adoc");
+    published.setTags(new String[]{tagWithHyphenBackslashAndBacktick});
+    published.setType(typeWithHyphen);
+    published.setStatus(Status.PUBLISHED);
+    published.setCached(true);
+    published.setRendered(false);
 
-        long documentCount3 = db.getPublishedCount(typeWithHyphen);
-        assertEquals(1, documentCount3);
+    db.addDocument(published);
 
-        db.markContentAsRendered(published);
+    DocumentList<DocumentModel> documentList5 = db.getUnrenderedContent();
+    assertEquals(2, documentList5.size());
+    assertEquals(Boolean.FALSE, documentList5.get(0).getRendered());
+    assertEquals(typeWithHyphen, documentList5.get(0).getType());
+    assertThat(documentList5.get(0).getTags()).contains(tagWithHyphenBackslashAndBacktick);
 
-        DocumentList<DocumentModel> documentList6 = db.getPublishedContent(typeWithHyphen);
-        assertEquals(1, documentList6.size());
-        assertEquals(Boolean.TRUE, documentList6.get(0).getRendered());
-        assertEquals(typeWithHyphen, documentList6.get(0).getType());
-        assertThat(documentList6.get(0).getTags()).contains(tagWithHyphenBackslashAndBacktick);
+    long documentCount3 = db.getPublishedCount(typeWithHyphen);
+    assertEquals(1, documentCount3);
 
-        DocumentList<DocumentModel> documentList7 = db.getPublishedDocumentsByTag(tagWithHyphenBackslashAndBacktick);
-        assertEquals(1, documentList7.size());
-        assertEquals(Boolean.TRUE, documentList7.get(0).getRendered());
-        assertEquals(typeWithHyphen, documentList7.get(0).getType());
-        assertThat(documentList7.get(0).getTags()).contains(tagWithHyphenBackslashAndBacktick);
+    db.markContentAsRendered(published);
 
-        DocumentList<DocumentModel> documentList8 = db.getPublishedPostsByTag(tagWithHyphenBackslashAndBacktick);
-        assertEquals(0, documentList8.size());
+    DocumentList<DocumentModel> documentList6 = db.getPublishedContent(typeWithHyphen);
+    assertEquals(1, documentList6.size());
+    assertEquals(Boolean.TRUE, documentList6.get(0).getRendered());
+    assertEquals(typeWithHyphen, documentList6.get(0).getType());
+    assertThat(documentList6.get(0).getTags()).contains(tagWithHyphenBackslashAndBacktick);
 
-        Set<String> tags = db.getAllTags();
-        assertEquals(Collections.singleton(tagWithHyphenBackslashAndBacktick), tags);
+    DocumentList<DocumentModel> documentList7 = db.getPublishedDocumentsByTag(tagWithHyphenBackslashAndBacktick);
+    assertEquals(1, documentList7.size());
+    assertEquals(Boolean.TRUE, documentList7.get(0).getRendered());
+    assertEquals(typeWithHyphen, documentList7.get(0).getType());
+    assertThat(documentList7.get(0).getTags()).contains(tagWithHyphenBackslashAndBacktick);
 
-        db.deleteContent(uri);
+    DocumentList<DocumentModel> documentList8 = db.getPublishedPostsByTag(tagWithHyphenBackslashAndBacktick);
+    assertEquals(0, documentList8.size());
 
-        long documentCount4 = db.getDocumentCount(typeWithHyphen);
-        assertEquals(1, documentCount4);
+    Set<String> tags = db.getAllTags();
+    assertEquals(Collections.singleton(tagWithHyphenBackslashAndBacktick), tags);
 
-        db.deleteAllByDocType(typeWithHyphen);
-    }
+    db.deleteContent(uri);
+
+    long documentCount4 = db.getDocumentCount(typeWithHyphen);
+    assertEquals(1, documentCount4);
+
+    db.deleteAllByDocType(typeWithHyphen);
+  }
 
 }

@@ -27,10 +27,10 @@ package org.jbake.app.template;
  *
  * @author jsb
  */
-public class PebbleTemplateEngineRenderingTest extends AbstractTemplateEngineRenderingTest{
+public class PebbleTemplateEngineRenderingTest extends AbstractTemplateEngineRenderingTest {
 
-    public PebbleTemplateEngineRenderingTest() {
-        super("pebbleTemplates", "pebble");
-    }
+  public PebbleTemplateEngineRenderingTest() {
+    super("pebbleTemplates", "pebble");
+  }
 
 }

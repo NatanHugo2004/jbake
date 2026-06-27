@@ -31,81 +31,81 @@ import java.util.Map;
  * @author Mariusz Smykuła
  */
 public class JadeTemplateEngine extends AbstractTemplateEngine {
-    private static final String FILTER_CDATA = "cdata";
-    private static final String FILTER_STYLE = "css";
-    private static final String FILTER_SCRIPT = "js";
+  private static final String FILTER_CDATA = "cdata";
+  private static final String FILTER_STYLE = "css";
+  private static final String FILTER_SCRIPT = "js";
 
-    private final JadeConfiguration jadeConfiguration = new JadeConfiguration();
+  private final JadeConfiguration jadeConfiguration = new JadeConfiguration();
 
-    @Deprecated
-    public JadeTemplateEngine(final CompositeConfiguration config, final ContentStore db, final File destination, final File templatesPath) {
-        super(config, db, destination, templatesPath);
+  @Deprecated
+  public JadeTemplateEngine(final CompositeConfiguration config, final ContentStore db, final File destination, final File templatesPath) {
+    super(config, db, destination, templatesPath);
+  }
+
+  public JadeTemplateEngine(final JBakeConfiguration config, final ContentStore db) {
+    super(config, db);
+
+    TemplateLoader loader = new FileTemplateLoader(config.getTemplateFolder().getPath() + File.separatorChar, config.getTemplateEncoding());
+    jadeConfiguration.setTemplateLoader(loader);
+    jadeConfiguration.setMode(Jade4J.Mode.XHTML);
+    jadeConfiguration.setPrettyPrint(true);
+    jadeConfiguration.setFilter(FILTER_CDATA, new CDATAFilter());
+    jadeConfiguration.setFilter(FILTER_SCRIPT, new JsFilter());
+    jadeConfiguration.setFilter(FILTER_STYLE, new CssFilter());
+    jadeConfiguration.getSharedVariables().put("formatter", new FormatHelper());
+  }
+
+  @Override
+  public void renderDocument(TemplateModel model, String templateName, Writer writer) throws RenderingException {
+    try {
+      JadeTemplate template = jadeConfiguration.getTemplate(templateName);
+
+      renderTemplate(template, model, writer);
+    } catch (IOException e) {
+      throw new RenderingException(e);
     }
+  }
 
-    public JadeTemplateEngine(final JBakeConfiguration config, final ContentStore db) {
-        super(config, db);
+  public void renderTemplate(JadeTemplate template, TemplateModel model, Writer writer) {
+    JadeModel jadeModel = wrap(model);
+    jadeModel.putAll(jadeConfiguration.getSharedVariables());
+    template.process(jadeModel, writer);
+  }
 
-        TemplateLoader loader = new FileTemplateLoader(config.getTemplateFolder().getPath() + File.separatorChar, config.getTemplateEncoding());
-        jadeConfiguration.setTemplateLoader(loader);
-        jadeConfiguration.setMode(Jade4J.Mode.XHTML);
-        jadeConfiguration.setPrettyPrint(true);
-        jadeConfiguration.setFilter(FILTER_CDATA, new CDATAFilter());
-        jadeConfiguration.setFilter(FILTER_SCRIPT, new JsFilter());
-        jadeConfiguration.setFilter(FILTER_STYLE, new CssFilter());
-        jadeConfiguration.getSharedVariables().put("formatter", new FormatHelper());
-    }
+  private JadeModel wrap(final TemplateModel model) {
+    return new JadeModel(model) {
 
-    @Override
-    public void renderDocument(TemplateModel model, String templateName, Writer writer) throws RenderingException {
+      @Override
+      public Object get(final Object property) {
         try {
-            JadeTemplate template = jadeConfiguration.getTemplate(templateName);
-
-            renderTemplate(template, model, writer);
-        } catch (IOException e) {
-            throw new RenderingException(e);
+          return extractors.extractAndTransform(db, (String) property, this, new TemplateEngineAdapter.NoopAdapter());
+        } catch (NoModelExtractorException e) {
+          return super.get(property);
         }
-    }
+      }
+    };
+  }
 
-    public void renderTemplate(JadeTemplate template, TemplateModel model, Writer writer) {
-        JadeModel jadeModel = wrap(model);
-        jadeModel.putAll(jadeConfiguration.getSharedVariables());
-        template.process(jadeModel, writer);
-    }
+  public static class FormatHelper {
+    private final Map<String, SimpleDateFormat> formatters = new HashMap<>();
 
-    private JadeModel wrap(final TemplateModel model) {
-        return new JadeModel(model) {
+    public String format(Date date, String pattern) {
+      if (date != null && pattern != null) {
+        SimpleDateFormat df = formatters.get(pattern);
 
-            @Override
-            public Object get(final Object property) {
-                try {
-                    return extractors.extractAndTransform(db, (String) property, this, new TemplateEngineAdapter.NoopAdapter());
-                } catch (NoModelExtractorException e) {
-                    return super.get(property);
-                }
-            }
-        };
-    }
-
-    public static class FormatHelper {
-        private final Map<String, SimpleDateFormat> formatters = new HashMap<>();
-
-        public String format(Date date, String pattern) {
-            if (date != null && pattern != null) {
-                SimpleDateFormat df = formatters.get(pattern);
-
-                if (df == null) {
-                    df = new SimpleDateFormat(pattern);
-                    formatters.put(pattern, df);
-                }
-
-                return df.format(date);
-            } else {
-                return "";
-            }
+        if (df == null) {
+          df = new SimpleDateFormat(pattern);
+          formatters.put(pattern, df);
         }
 
-        public String escape(String s) {
-            return StringEscapeUtils.escapeHtml(s);
-        }
+        return df.format(date);
+      } else {
+        return "";
+      }
     }
+
+    public String escape(String s) {
+      return StringEscapeUtils.escapeHtml(s);
+    }
+  }
 }

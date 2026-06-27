@@ -17,26 +17,26 @@ import org.slf4j.LoggerFactory;
 @ExtendWith(MockitoExtension.class)
 public abstract class LoggingTest {
 
-    @Mock
-    protected Appender<ILoggingEvent> mockAppender;
+  @Mock
+  protected Appender<ILoggingEvent> mockAppender;
 
-    @Captor
-    protected ArgumentCaptor<LoggingEvent> captorLoggingEvent;
+  @Captor
+  protected ArgumentCaptor<LoggingEvent> captorLoggingEvent;
 
-    protected Logger root;
+  protected Logger root;
 
-    @BeforeEach
-    public void setupBase() {
-        root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+  @BeforeEach
+  public void setupBase() {
+    root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
 
-        root.addAppender(mockAppender);
-        root.setLevel(Level.INFO);
-    }
+    root.addAppender(mockAppender);
+    root.setLevel(Level.INFO);
+  }
 
-    @AfterEach
-    public void teardownBase() {
-        root.detachAppender(mockAppender);
-    }
+  @AfterEach
+  public void teardownBase() {
+    root.detachAppender(mockAppender);
+  }
 
 
 }

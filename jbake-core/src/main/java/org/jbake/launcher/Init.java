@@ -16,64 +16,64 @@ import java.io.FileInputStream;
  */
 public class Init {
 
-    private final JBakeConfiguration config;
+  private final JBakeConfiguration config;
 
-    /**
-     * @param config The project configuration
-     * @deprecated use {@link Init#Init(JBakeConfiguration)} instead
-     */
-    @Deprecated
-    public Init(CompositeConfiguration config) {
-        this(new DefaultJBakeConfiguration(config));
+  /**
+   * @param config The project configuration
+   * @deprecated use {@link Init#Init(JBakeConfiguration)} instead
+   */
+  @Deprecated
+  public Init(CompositeConfiguration config) {
+    this(new DefaultJBakeConfiguration(config));
+  }
+
+  public Init(JBakeConfiguration config) {
+    this.config = config;
+  }
+
+  /**
+   * Performs checks on output folder before extracting template file
+   *
+   * @param outputFolder           Target directory for extracting template file
+   * @param templateLocationFolder Source location for template file
+   * @param templateType           Type of the template to be used
+   * @throws Exception if required folder structure can't be achieved without content overwriting
+   */
+  public void run(File outputFolder, File templateLocationFolder, String templateType) throws Exception {
+    if (!outputFolder.canWrite()) {
+      throw new Exception("Output folder is not writeable!");
     }
 
-    public Init(JBakeConfiguration config) {
-        this.config = config;
+    File[] contents = outputFolder.listFiles();
+    boolean safe = true;
+    if (contents != null) {
+      for (File content : contents) {
+        if (content.isDirectory()) {
+          if (content.getName().equalsIgnoreCase(config.getTemplateFolderName())) {
+            safe = false;
+          }
+          if (content.getName().equalsIgnoreCase(config.getContentFolderName())) {
+            safe = false;
+          }
+          if (content.getName().equalsIgnoreCase(config.getAssetFolderName())) {
+            safe = false;
+          }
+        }
+      }
     }
 
-    /**
-     * Performs checks on output folder before extracting template file
-     *
-     * @param outputFolder                        Target directory for extracting template file
-     * @param templateLocationFolder  Source location for template file
-     * @param templateType                        Type of the template to be used
-     * @throws Exception                            if required folder structure can't be achieved without content overwriting
-     */
-    public void run(File outputFolder, File templateLocationFolder, String templateType) throws Exception {
-        if (!outputFolder.canWrite()) {
-            throw new Exception("Output folder is not writeable!");
-        }
-
-        File[] contents = outputFolder.listFiles();
-        boolean safe = true;
-        if (contents != null) {
-            for (File content : contents) {
-                if (content.isDirectory()) {
-                    if (content.getName().equalsIgnoreCase(config.getTemplateFolderName())) {
-                        safe = false;
-                    }
-                    if (content.getName().equalsIgnoreCase(config.getContentFolderName())) {
-                        safe = false;
-                    }
-                    if (content.getName().equalsIgnoreCase(config.getAssetFolderName())) {
-                        safe = false;
-                    }
-                }
-            }
-        }
-
-        if (!safe) {
-            throw new Exception(String.format("Output folder '%s' already contains structure!",
-                    outputFolder.getAbsolutePath()));
-        }
-        if (config.getExampleProjectByType(templateType) != null) {
-            File templateFile = new File(templateLocationFolder, config.getExampleProjectByType(templateType));
-            if (!templateFile.exists()) {
-                throw new Exception("Cannot find example project file: " + templateFile.getPath());
-            }
-            ZipUtil.extract(new FileInputStream(templateFile), outputFolder);
-        } else {
-            throw new Exception("Cannot locate example project type: " + templateType);
-        }
+    if (!safe) {
+      throw new Exception(String.format("Output folder '%s' already contains structure!",
+        outputFolder.getAbsolutePath()));
     }
+    if (config.getExampleProjectByType(templateType) != null) {
+      File templateFile = new File(templateLocationFolder, config.getExampleProjectByType(templateType));
+      if (!templateFile.exists()) {
+        throw new Exception("Cannot find example project file: " + templateFile.getPath());
+      }
+      ZipUtil.extract(new FileInputStream(templateFile), outputFolder);
+    } else {
+      throw new Exception("Cannot locate example project type: " + templateType);
+    }
+  }
 }

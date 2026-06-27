@@ -31,7 +31,7 @@ import java.util.Set;
  * <p>Markup engines are singletons, so are typically used to initialize the underlying renderning engines. They
  * <b>must not</b> store specific information of a currently processed file (use {@link ParserContext the parser context}
  * for that).</p>
- *
+ * <p>
  * This class loads the engines only if they are found on classpath. If not, the engine is not registered. This allows
  * JBake to support multiple rendering engines without the explicit need to have them on classpath. This is a better
  * fit for embedding.
@@ -40,96 +40,96 @@ import java.util.Set;
  *
  */
 public class Engines {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Engines.class);
-    private static final Engines INSTANCE;
+  private static final Logger LOGGER = LoggerFactory.getLogger(Engines.class);
+  private static final Engines INSTANCE;
 
-    private final Map<String, ParserEngine> parsers;
+  private final Map<String, ParserEngine> parsers;
 
 
-    static {
-        INSTANCE = new Engines();
-        loadEngines();
+  static {
+    INSTANCE = new Engines();
+    loadEngines();
+  }
+
+  public static ParserEngine get(String fileExtension) {
+    return INSTANCE.getEngine(fileExtension);
+  }
+
+  public static void register(String fileExtension, ParserEngine engine) {
+    INSTANCE.registerEngine(fileExtension, engine);
+  }
+
+  public static Set<String> getRecognizedExtensions() {
+    return Collections.unmodifiableSet(INSTANCE.parsers.keySet());
+  }
+
+  private Engines() {
+    parsers = new HashMap<>();
+  }
+
+  private void registerEngine(String fileExtension, ParserEngine markupEngine) {
+    ParserEngine old = parsers.put(fileExtension, markupEngine);
+    if (old != null) {
+      LOGGER.warn("Registered a markup engine for extension [.{}] but another one was already defined: {}", fileExtension, old);
     }
+  }
 
-    public static ParserEngine get(String fileExtension) {
-        return INSTANCE.getEngine(fileExtension);
+  private ParserEngine getEngine(String fileExtension) {
+    return parsers.get(fileExtension);
+  }
+
+  /**
+   * This method is used to search for a specific class, telling if loading the engine would succeed. This is
+   * typically used to avoid loading optional modules.
+   *
+   * @param engineClassName engine class, used both as a hint to find it and to create the engine itself.
+   * @return null if the engine is not available, an instance of the engine otherwise
+   */
+  private static ParserEngine tryLoadEngine(String engineClassName) {
+    try {
+      @SuppressWarnings("unchecked")
+      Class<? extends ParserEngine> engineClass = (Class<? extends ParserEngine>) Class.forName(engineClassName, false, Engines.class.getClassLoader());
+      return engineClass.getDeclaredConstructor().newInstance();
+    } catch (ClassNotFoundException | NoClassDefFoundError | IllegalAccessException | InstantiationException e) {
+      return new ErrorEngine(engineClassName);
+    } catch (NoSuchMethodException | InvocationTargetException e) {
+      LOGGER.error("unable to instantiate ParserEngine {}", engineClassName);
     }
+    return null;
+  }
 
-    public static void register(String fileExtension, ParserEngine engine) {
-        INSTANCE.registerEngine(fileExtension, engine);
-    }
-
-    public static Set<String> getRecognizedExtensions() {
-        return Collections.unmodifiableSet(INSTANCE.parsers.keySet());
-    }
-
-    private Engines() {
-        parsers = new HashMap<>();
-    }
-
-    private void registerEngine(String fileExtension, ParserEngine markupEngine) {
-        ParserEngine old = parsers.put(fileExtension, markupEngine);
-        if (old != null) {
-            LOGGER.warn("Registered a markup engine for extension [.{}] but another one was already defined: {}", fileExtension, old);
+  /**
+   * This method is used internally to load markup engines. Markup engines are found using descriptor files on classpath, so
+   * adding an engine is as easy as adding a jar on classpath with the descriptor file included.
+   */
+  private static void loadEngines() {
+    try {
+      ClassLoader cl = Engines.class.getClassLoader();
+      Enumeration<URL> resources = cl.getResources("META-INF/org.jbake.parser.MarkupEngines.properties");
+      while (resources.hasMoreElements()) {
+        URL url = resources.nextElement();
+        Properties props = new Properties();
+        props.load(url.openStream());
+        for (Map.Entry<Object, Object> entry : props.entrySet()) {
+          String className = (String) entry.getKey();
+          String[] extensions = ((String) entry.getValue()).split(",");
+          registerEngine(className, extensions);
         }
+      }
+    } catch (IOException e) {
+      LOGGER.error("Error loading Engines", e);
     }
+  }
 
-    private ParserEngine getEngine(String fileExtension) {
-        return parsers.get(fileExtension);
+  private static void registerEngine(String className, String... extensions) {
+    ParserEngine engine = tryLoadEngine(className);
+    if (engine != null) {
+      for (String extension : extensions) {
+        register(extension, engine);
+      }
+      if (engine instanceof ErrorEngine) {
+        LOGGER.warn("Unable to load a suitable rendering engine for extensions {}", (Object) extensions);
+      }
     }
-
-    /**
-     * This method is used to search for a specific class, telling if loading the engine would succeed. This is
-     * typically used to avoid loading optional modules.
-     *
-     * @param engineClassName engine class, used both as a hint to find it and to create the engine itself.
-     * @return null if the engine is not available, an instance of the engine otherwise
-     */
-    private static ParserEngine tryLoadEngine(String engineClassName) {
-        try {
-            @SuppressWarnings("unchecked")
-            Class<? extends ParserEngine> engineClass = (Class<? extends ParserEngine>) Class.forName(engineClassName, false, Engines.class.getClassLoader());
-            return engineClass.getDeclaredConstructor().newInstance();
-        } catch (ClassNotFoundException | NoClassDefFoundError | IllegalAccessException | InstantiationException e) {
-            return new ErrorEngine(engineClassName);
-        } catch (NoSuchMethodException | InvocationTargetException e) {
-            LOGGER.error("unable to instantiate ParserEngine {}", engineClassName);
-        }
-        return null;
-    }
-
-    /**
-     * This method is used internally to load markup engines. Markup engines are found using descriptor files on classpath, so
-     * adding an engine is as easy as adding a jar on classpath with the descriptor file included.
-     */
-    private static void loadEngines() {
-        try {
-            ClassLoader cl = Engines.class.getClassLoader();
-            Enumeration<URL> resources = cl.getResources("META-INF/org.jbake.parser.MarkupEngines.properties");
-            while (resources.hasMoreElements()) {
-                URL url = resources.nextElement();
-                Properties props = new Properties();
-                props.load(url.openStream());
-                for (Map.Entry<Object, Object> entry : props.entrySet()) {
-                    String className = (String) entry.getKey();
-                    String[] extensions = ((String)entry.getValue()).split(",");
-                    registerEngine(className, extensions);
-                }
-            }
-        } catch (IOException e) {
-            LOGGER.error("Error loading Engines", e);
-        }
-    }
-
-    private static void registerEngine(String className, String... extensions) {
-        ParserEngine engine = tryLoadEngine(className);
-        if (engine != null) {
-            for (String extension : extensions) {
-                register(extension, engine);
-            }
-            if (engine instanceof ErrorEngine) {
-                LOGGER.warn("Unable to load a suitable rendering engine for extensions {}", (Object) extensions);
-            }
-        }
-    }
+  }
 }

@@ -20,55 +20,55 @@ import java.util.Map;
  * @author Mitchell Bosecke
  */
 public class PebbleTemplateEngine extends AbstractTemplateEngine {
-    private PebbleEngine engine;
+  private PebbleEngine engine;
 
-    public PebbleTemplateEngine(final JBakeConfiguration config, final ContentStore db) {
-        super(config, db);
-        initializeTemplateEngine();
+  public PebbleTemplateEngine(final JBakeConfiguration config, final ContentStore db) {
+    super(config, db);
+    initializeTemplateEngine();
+  }
+
+  private void initializeTemplateEngine() {
+    Loader loader = new FileLoader();
+    loader.setPrefix(config.getTemplateFolder().getAbsolutePath());
+
+    /*
+     * Turn off the autoescaper because I believe that we can assume all
+     * data is safe considering it is all statically generated.
+     */
+    EscaperExtension escaper = new EscaperExtension();
+    escaper.setAutoEscaping(false);
+
+    engine = new PebbleEngine.Builder().loader(loader).extension(escaper).build();
+  }
+
+  @Override
+  public void renderDocument(final TemplateModel model, final String templateName, final Writer writer)
+    throws RenderingException {
+
+    PebbleTemplate template;
+    try {
+      template = engine.getTemplate(templateName);
+      template.evaluate(writer, wrap(model));
+    } catch (PebbleException | IOException e) {
+      throw new RenderingException(e);
     }
 
-    private void initializeTemplateEngine() {
-        Loader loader = new FileLoader();
-        loader.setPrefix(config.getTemplateFolder().getAbsolutePath());
+  }
 
-        /*
-         * Turn off the autoescaper because I believe that we can assume all
-         * data is safe considering it is all statically generated.
-         */
-        EscaperExtension escaper = new EscaperExtension();
-        escaper.setAutoEscaping(false);
+  private TemplateModel wrap(final TemplateModel model) {
+    return new TemplateModel(model) {
 
-        engine = new PebbleEngine.Builder().loader(loader).extension(escaper).build();
-    }
+      private static final long serialVersionUID = -5489285491728950547L;
 
-    @Override
-    public void renderDocument(final TemplateModel model, final String templateName, final Writer writer)
-        throws RenderingException {
-
-        PebbleTemplate template;
+      @Override
+      public Object get(final Object property) {
         try {
-            template = engine.getTemplate(templateName);
-            template.evaluate(writer, wrap(model));
-        } catch (PebbleException | IOException e) {
-            throw new RenderingException(e);
+          return extractors.extractAndTransform(db, (String) property, this, new TemplateEngineAdapter.NoopAdapter());
+        } catch (NoModelExtractorException e) {
+          return super.get(property);
         }
+      }
+    };
 
-    }
-
-    private TemplateModel wrap(final TemplateModel model) {
-        return new TemplateModel(model) {
-
-            private static final long serialVersionUID = -5489285491728950547L;
-
-            @Override
-            public Object get(final Object property) {
-                try {
-                    return extractors.extractAndTransform(db, (String) property, this, new TemplateEngineAdapter.NoopAdapter());
-                } catch(NoModelExtractorException e) {
-                    return super.get(property);
-                }
-            }
-        };
-
-    }
+  }
 }

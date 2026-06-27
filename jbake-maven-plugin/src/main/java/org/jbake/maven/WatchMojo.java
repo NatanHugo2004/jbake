@@ -39,7 +39,7 @@ public class WatchMojo extends GenerateMojo {
     Long lastProcessed = System.currentTimeMillis();
 
     getLog().info(
-        "Now listening for changes on path " + inputDirectory.getPath());
+      "Now listening for changes on path " + inputDirectory.getPath());
 
     initServer();
 
@@ -49,14 +49,14 @@ public class WatchMojo extends GenerateMojo {
       dirWatcher = new DirWatcher(inputDirectory);
       final AtomicBoolean done = new AtomicBoolean(false);
       final BufferedReader reader = new BufferedReader(
-          new InputStreamReader(System.in));
+        new InputStreamReader(System.in));
 
       (new Thread() {
         @Override
         public void run() {
           try {
             getLog()
-                .info("Running. Enter a blank line to finish. Anything else forces re-rendering.");
+              .info("Running. Enter a blank line to finish. Anything else forces re-rendering.");
 
             while (true) {
               String line = reader.readLine();

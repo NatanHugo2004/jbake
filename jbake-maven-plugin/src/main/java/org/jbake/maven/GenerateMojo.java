@@ -36,63 +36,63 @@ import java.io.File;
  */
 @Mojo(name = "generate", requiresProject = true, requiresDependencyResolution = ResolutionScope.COMPILE_PLUS_RUNTIME)
 public class GenerateMojo extends AbstractMojo {
-    @Parameter(defaultValue = "${project}")
-    protected MavenProject project;
+  @Parameter(defaultValue = "${project}")
+  protected MavenProject project;
 
-    /**
-     * Location of the Output Directory.
-     */
-    @Parameter(property = "jbake.outputDirectory",
-        defaultValue = "${project.build.directory}/${project.build.finalName}",
-        required = true)
-    protected File outputDirectory;
+  /**
+   * Location of the Output Directory.
+   */
+  @Parameter(property = "jbake.outputDirectory",
+    defaultValue = "${project.build.directory}/${project.build.finalName}",
+    required = true)
+  protected File outputDirectory;
 
-    /**
-     * Location of the Output Directory.
-     */
-    @Parameter(property = "jbake.inputDirectory", defaultValue = "${project.basedir}/src/main/jbake",
-        required = true)
-    protected File inputDirectory;
+  /**
+   * Location of the Output Directory.
+   */
+  @Parameter(property = "jbake.inputDirectory", defaultValue = "${project.basedir}/src/main/jbake",
+    required = true)
+  protected File inputDirectory;
 
-    /**
-     * Breaks the build when {@code true} and errors occur during baking in JBake oven.
-     */
-    @Parameter(property = "jbake.failOnError", defaultValue = "true")
-    protected boolean failOnError;
+  /**
+   * Breaks the build when {@code true} and errors occur during baking in JBake oven.
+   */
+  @Parameter(property = "jbake.failOnError", defaultValue = "true")
+  protected boolean failOnError;
 
-    /**
-     * Set if cache is present or clear
-     */
-    @Parameter(property = "jbake.isClearCache", defaultValue = "false", required = true)
-    protected boolean isClearCache;
+  /**
+   * Set if cache is present or clear
+   */
+  @Parameter(property = "jbake.isClearCache", defaultValue = "false", required = true)
+  protected boolean isClearCache;
 
-    public final void execute() throws MojoExecutionException {
-        executeInternal();
+  public final void execute() throws MojoExecutionException {
+    executeInternal();
+  }
+
+  protected void executeInternal() throws MojoExecutionException {
+    reRender();
+  }
+
+  protected void reRender() throws MojoExecutionException {
+    try {
+      // TODO: At some point, reuse Oven
+      Oven oven = new Oven(createConfiguration());
+      oven.bake();
+      if (failOnError && !oven.getErrors().isEmpty()) {
+        throw new MojoFailureException("Baked with " + oven.getErrors().size() + " errors. Check output above for details!");
+      }
+    } catch (Exception e) {
+      getLog().info("Oops", e);
+
+      throw new MojoExecutionException("Failure when running: ", e);
     }
+  }
 
-    protected void executeInternal() throws MojoExecutionException {
-        reRender();
-    }
-
-    protected void reRender() throws MojoExecutionException {
-        try {
-            // TODO: At some point, reuse Oven
-            Oven oven = new Oven(createConfiguration());
-            oven.bake();
-            if (failOnError && !oven.getErrors().isEmpty()) {
-                throw new MojoFailureException("Baked with " + oven.getErrors().size() + " errors. Check output above for details!");
-            }
-        } catch (Exception e) {
-            getLog().info("Oops", e);
-
-            throw new MojoExecutionException("Failure when running: ", e);
-        }
-    }
-
-    protected JBakeConfiguration createConfiguration() throws JBakeException {
-        DefaultJBakeConfiguration jBakeConfiguration = new JBakeConfigurationFactory().createDefaultJbakeConfiguration(inputDirectory, outputDirectory, isClearCache);
-        jBakeConfiguration.addConfiguration(this.project.getProperties());
-        return jBakeConfiguration;
-    }
+  protected JBakeConfiguration createConfiguration() throws JBakeException {
+    DefaultJBakeConfiguration jBakeConfiguration = new JBakeConfigurationFactory().createDefaultJbakeConfiguration(inputDirectory, outputDirectory, isClearCache);
+    jBakeConfiguration.addConfiguration(this.project.getProperties());
+    return jBakeConfiguration;
+  }
 
 }

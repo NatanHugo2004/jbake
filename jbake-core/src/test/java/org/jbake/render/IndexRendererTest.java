@@ -18,109 +18,109 @@ import static org.mockito.Mockito.when;
 
 public class IndexRendererTest {
 
-    @Test
-    public void returnsZeroWhenConfigDoesNotRenderIndices() throws RenderingException {
-        IndexRenderer renderer = new IndexRenderer();
+  @Test
+  public void returnsZeroWhenConfigDoesNotRenderIndices() throws RenderingException {
+    IndexRenderer renderer = new IndexRenderer();
 
-        JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
-        when(configuration.getRenderIndex()).thenReturn(false);
+    JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
+    when(configuration.getRenderIndex()).thenReturn(false);
 
-        ContentStore contentStore = mock(ContentStore.class);
+    ContentStore contentStore = mock(ContentStore.class);
 
-        Renderer mockRenderer = mock(Renderer.class);
-        int renderResponse = renderer.render(mockRenderer, contentStore, configuration);
+    Renderer mockRenderer = mock(Renderer.class);
+    int renderResponse = renderer.render(mockRenderer, contentStore, configuration);
 
-        assertThat(renderResponse).isEqualTo(0);
-    }
+    assertThat(renderResponse).isEqualTo(0);
+  }
 
-    @Test
-    public void doesNotRenderWhenConfigDoesNotRenderIndices() throws Exception {
-        IndexRenderer renderer = new IndexRenderer();
+  @Test
+  public void doesNotRenderWhenConfigDoesNotRenderIndices() throws Exception {
+    IndexRenderer renderer = new IndexRenderer();
 
-        JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
-        when(configuration.getRenderIndex()).thenReturn(false);
+    JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
+    when(configuration.getRenderIndex()).thenReturn(false);
 
-        ContentStore contentStore = mock(ContentStore.class);
-        Renderer mockRenderer = mock(Renderer.class);
+    ContentStore contentStore = mock(ContentStore.class);
+    Renderer mockRenderer = mock(Renderer.class);
 
-        renderer.render(mockRenderer, contentStore, configuration);
+    renderer.render(mockRenderer, contentStore, configuration);
 
-        verify(mockRenderer, never()).renderIndex(anyString());
-    }
+    verify(mockRenderer, never()).renderIndex(anyString());
+  }
 
-    @Test
-    public void returnsOneWhenConfigRendersIndices() throws RenderingException {
-        IndexRenderer renderer = new IndexRenderer();
+  @Test
+  public void returnsOneWhenConfigRendersIndices() throws RenderingException {
+    IndexRenderer renderer = new IndexRenderer();
 
-        JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
-        when(configuration.getRenderIndex()).thenReturn(true);
+    JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
+    when(configuration.getRenderIndex()).thenReturn(true);
 
-        ContentStore contentStore = mock(ContentStore.class);
+    ContentStore contentStore = mock(ContentStore.class);
 
-        Renderer mockRenderer = mock(Renderer.class);
+    Renderer mockRenderer = mock(Renderer.class);
 
-        int renderResponse = renderer.render(mockRenderer, contentStore, configuration);
+    int renderResponse = renderer.render(mockRenderer, contentStore, configuration);
 
-        assertThat(renderResponse).isEqualTo(1);
-    }
-
-
-    @Test(expected = RenderingException.class)
-    public void propagatesRenderingException() throws Exception {
-        IndexRenderer renderer = new IndexRenderer();
-
-        JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
-        when(configuration.getRenderIndex()).thenReturn(true);
-        when(configuration.getIndexFileName()).thenReturn("mockindex.html");
-
-        ContentStore contentStore = mock(ContentStore.class);
-        Renderer mockRenderer = mock(Renderer.class);
-
-        doThrow(new Exception()).when(mockRenderer).renderIndex(anyString());
-
-        renderer.render(mockRenderer, contentStore, configuration);
-
-        verify(mockRenderer, never()).renderIndex(anyString());
-    }
+    assertThat(renderResponse).isEqualTo(1);
+  }
 
 
-    /**
-     * @see <a href="https://github.com/jbake-org/jbake/issues/332">Issue 332</a>
-     */
-    @Test
-    public void shouldFallbackToStandardIndexRenderingIfPropertyIsMissing() throws Exception {
-        IndexRenderer renderer = new IndexRenderer();
+  @Test(expected = RenderingException.class)
+  public void propagatesRenderingException() throws Exception {
+    IndexRenderer renderer = new IndexRenderer();
 
-        JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
-        when(configuration.getRenderIndex()).thenReturn(true);
-        when(configuration.getIndexFileName()).thenReturn("mockindex.html");
+    JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
+    when(configuration.getRenderIndex()).thenReturn(true);
+    when(configuration.getIndexFileName()).thenReturn("mockindex.html");
 
-        ContentStore contentStore = mock(ContentStore.class);
-        Renderer mockRenderer = mock(Renderer.class);
+    ContentStore contentStore = mock(ContentStore.class);
+    Renderer mockRenderer = mock(Renderer.class);
 
-        renderer.render(mockRenderer, contentStore, configuration);
+    doThrow(new Exception()).when(mockRenderer).renderIndex(anyString());
 
-        verify(mockRenderer, times(1)).renderIndex(anyString());
-    }
+    renderer.render(mockRenderer, contentStore, configuration);
 
-    @Test
-    public void shouldRenderPaginatedIndex() throws Exception {
+    verify(mockRenderer, never()).renderIndex(anyString());
+  }
 
-        IndexRenderer renderer = new IndexRenderer();
 
-        JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
-        when(configuration.getRenderIndex()).thenReturn(true);
-        when(configuration.getPaginateIndex()).thenReturn(true);
-        when(configuration.getIndexFileName()).thenReturn("mockindex.html");
+  /**
+   * @see <a href="https://github.com/jbake-org/jbake/issues/332">Issue 332</a>
+   */
+  @Test
+  public void shouldFallbackToStandardIndexRenderingIfPropertyIsMissing() throws Exception {
+    IndexRenderer renderer = new IndexRenderer();
 
-        ContentStore contentStore = mock(ContentStore.class);
-        Renderer mockRenderer = mock(Renderer.class);
+    JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
+    when(configuration.getRenderIndex()).thenReturn(true);
+    when(configuration.getIndexFileName()).thenReturn("mockindex.html");
 
-        renderer.render(mockRenderer, contentStore, configuration);
+    ContentStore contentStore = mock(ContentStore.class);
+    Renderer mockRenderer = mock(Renderer.class);
 
-        verify(mockRenderer, times(1)).renderIndexPaging(anyString());
+    renderer.render(mockRenderer, contentStore, configuration);
 
-    }
+    verify(mockRenderer, times(1)).renderIndex(anyString());
+  }
+
+  @Test
+  public void shouldRenderPaginatedIndex() throws Exception {
+
+    IndexRenderer renderer = new IndexRenderer();
+
+    JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
+    when(configuration.getRenderIndex()).thenReturn(true);
+    when(configuration.getPaginateIndex()).thenReturn(true);
+    when(configuration.getIndexFileName()).thenReturn("mockindex.html");
+
+    ContentStore contentStore = mock(ContentStore.class);
+    Renderer mockRenderer = mock(Renderer.class);
+
+    renderer.render(mockRenderer, contentStore, configuration);
+
+    verify(mockRenderer, times(1)).renderIndexPaging(anyString());
+
+  }
 }
 
 

@@ -8,9 +8,9 @@ import java.util.Map;
 
 public class PublishedDateExtractor implements ModelExtractor<Date> {
 
-    @Override
-    public Date get(ContentStore db, Map model, String key) {
-        return new Date();
-    }
+  @Override
+  public Date get(ContentStore db, Map model, String key) {
+    return new Date();
+  }
 
 }

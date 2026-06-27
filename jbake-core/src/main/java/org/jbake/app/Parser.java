@@ -15,32 +15,32 @@ import java.io.File;
  * @author Jonathan Bullock <a href="mailto:jonbullock@gmail.com">jonbullock@gmail.com</a>
  */
 public class Parser {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Parser.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(Parser.class);
 
-    private JBakeConfiguration config;
+  private JBakeConfiguration config;
 
-    /**
-     * Creates a new instance of Parser.
-     *
-     * @param config Project configuration
-     */
-    public Parser(JBakeConfiguration config) {
-        this.config = config;
+  /**
+   * Creates a new instance of Parser.
+   *
+   * @param config Project configuration
+   */
+  public Parser(JBakeConfiguration config) {
+    this.config = config;
+  }
+
+  /**
+   * Process the file by parsing the contents.
+   *
+   * @param file File input for parsing
+   * @return The contents of the file
+   */
+  public DocumentModel processFile(File file) {
+    ParserEngine engine = Engines.get(FileUtil.fileExt(file));
+    if (engine == null) {
+      LOGGER.error("Unable to find suitable markup engine for {}", file);
+      return null;
     }
 
-    /**
-     * Process the file by parsing the contents.
-     *
-     * @param file File input for parsing
-     * @return The contents of the file
-     */
-    public DocumentModel processFile(File file) {
-        ParserEngine engine = Engines.get(FileUtil.fileExt(file));
-        if (engine == null) {
-            LOGGER.error("Unable to find suitable markup engine for {}", file);
-            return null;
-        }
-
-        return engine.parse(config, file);
-    }
+    return engine.parse(config, file);
+  }
 }

@@ -8,9 +8,9 @@ import java.util.Set;
 
 public class AllTagsExtractor implements ModelExtractor<Set<String>> {
 
-    @Override
-    public Set<String> get(ContentStore db, Map model, String key) {
-        return db.getAllTags();
-    }
+  @Override
+  public Set<String> get(ContentStore db, Map model, String key) {
+    return db.getAllTags();
+  }
 
 }

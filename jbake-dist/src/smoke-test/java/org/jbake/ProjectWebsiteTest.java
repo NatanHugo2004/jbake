@@ -18,55 +18,55 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ProjectWebsiteTest {
 
 
-    private static final String WEBSITE_REPO_URL = "https://github.com/jbake-org/jbake.org.git";
+  private static final String WEBSITE_REPO_URL = "https://github.com/jbake-org/jbake.org.git";
 
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
-    private File projectFolder;
-    private File outputFolder;
-    private String jbakeExecutable;
-    private BinaryRunner runner;
+  @Rule
+  public TemporaryFolder folder = new TemporaryFolder();
+  private File projectFolder;
+  private File outputFolder;
+  private String jbakeExecutable;
+  private BinaryRunner runner;
 
-    @Before
-    public void setup() throws IOException, GitAPIException {
-        Assume.assumeTrue("JDK 7 is not supported for this test", !isJava7());
-        if (Os.isFamily(Os.OS_FAMILY_WINDOWS)) {
-            jbakeExecutable = new File("build\\install\\jbake\\bin\\jbake.bat").getAbsolutePath();
-        } else {
-            jbakeExecutable = new File("build/install/jbake/bin/jbake").getAbsolutePath();
-        }
-        projectFolder = folder.newFolder("project");
-        new File(projectFolder, "templates");
-        outputFolder = new File(projectFolder, "output");
-
-        runner = new BinaryRunner(projectFolder);
-        cloneJbakeWebsite();
-
+  @Before
+  public void setup() throws IOException, GitAPIException {
+    Assume.assumeTrue("JDK 7 is not supported for this test", !isJava7());
+    if (Os.isFamily(Os.OS_FAMILY_WINDOWS)) {
+      jbakeExecutable = new File("build\\install\\jbake\\bin\\jbake.bat").getAbsolutePath();
+    } else {
+      jbakeExecutable = new File("build/install/jbake/bin/jbake").getAbsolutePath();
     }
+    projectFolder = folder.newFolder("project");
+    new File(projectFolder, "templates");
+    outputFolder = new File(projectFolder, "output");
 
-    private boolean isJava7() {
-        return System.getProperty("java.specification.version").equals("1.7");
-    }
+    runner = new BinaryRunner(projectFolder);
+    cloneJbakeWebsite();
 
-    private void cloneJbakeWebsite() throws GitAPIException {
-        CloneCommand cmd = Git.cloneRepository();
-        cmd.setBare(false);
-        cmd.setBranch("master");
-        cmd.setRemote("origin");
-        cmd.setURI(WEBSITE_REPO_URL);
-        cmd.setDirectory(projectFolder);
+  }
 
-        cmd.call();
+  private boolean isJava7() {
+    return System.getProperty("java.specification.version").equals("1.7");
+  }
 
-        assertThat(new File(projectFolder, "README.md").exists()).isTrue();
-    }
+  private void cloneJbakeWebsite() throws GitAPIException {
+    CloneCommand cmd = Git.cloneRepository();
+    cmd.setBare(false);
+    cmd.setBranch("master");
+    cmd.setRemote("origin");
+    cmd.setURI(WEBSITE_REPO_URL);
+    cmd.setDirectory(projectFolder);
 
-    @Test
-    public void shouldBakeWebsite() throws IOException, InterruptedException {
-        Process process = runner.runWithArguments(jbakeExecutable, "-b");
-        assertThat(process.exitValue()).isEqualTo(0);
-        assertThat(new File(outputFolder, "index.html")).exists();
-        process.destroy();
-    }
+    cmd.call();
+
+    assertThat(new File(projectFolder, "README.md").exists()).isTrue();
+  }
+
+  @Test
+  public void shouldBakeWebsite() throws IOException, InterruptedException {
+    Process process = runner.runWithArguments(jbakeExecutable, "-b");
+    assertThat(process.exitValue()).isEqualTo(0);
+    assertThat(new File(outputFolder, "index.html")).exists();
+    process.destroy();
+  }
 
 }

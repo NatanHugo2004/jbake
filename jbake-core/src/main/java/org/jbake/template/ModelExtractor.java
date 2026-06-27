@@ -11,6 +11,6 @@ import java.util.Map;
  */
 public interface ModelExtractor<T> {
 
-    T get(ContentStore db, Map model, String key);
+  T get(ContentStore db, Map model, String key);
 
 }

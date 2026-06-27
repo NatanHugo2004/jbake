@@ -10,15 +10,15 @@ import java.util.Map;
 
 public class PublishedContentExtractor implements ModelExtractor<DocumentList> {
 
-    @Override
-    public DocumentList get(ContentStore db, Map model, String key) {
-        DocumentList<DocumentModel> publishedContent = new DocumentList<>();
-        String[] documentTypes = DocumentTypes.getDocumentTypes();
-        for (String docType : documentTypes) {
-            DocumentList<DocumentModel> query = db.getPublishedContent(docType);
-            publishedContent.addAll(query);
-        }
-        return publishedContent;
+  @Override
+  public DocumentList get(ContentStore db, Map model, String key) {
+    DocumentList<DocumentModel> publishedContent = new DocumentList<>();
+    String[] documentTypes = DocumentTypes.getDocumentTypes();
+    for (String docType : documentTypes) {
+      DocumentList<DocumentModel> query = db.getPublishedContent(docType);
+      publishedContent.addAll(query);
     }
+    return publishedContent;
+  }
 
 }

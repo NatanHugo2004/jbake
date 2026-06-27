@@ -50,261 +50,261 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public abstract class AbstractTemplateEngineRenderingTest extends ContentStoreIntegrationTest {
 
-    protected final String templateDir;
-    protected final String templateExtension;
-    protected final Map<String, List<String>> outputStrings = new HashMap<>();
+  protected final String templateDir;
+  protected final String templateExtension;
+  protected final Map<String, List<String>> outputStrings = new HashMap<>();
 
-    protected File destinationFolder;
-    protected File templateFolder;
-    protected Renderer renderer;
-    protected Locale currentLocale;
-    private Parser parser;
+  protected File destinationFolder;
+  protected File templateFolder;
+  protected Renderer renderer;
+  protected Locale currentLocale;
+  private Parser parser;
 
-    public AbstractTemplateEngineRenderingTest(String templateDir, String templateExtension) {
-        this.templateDir = templateDir;
-        this.templateExtension = templateExtension;
+  public AbstractTemplateEngineRenderingTest(String templateDir, String templateExtension) {
+    this.templateDir = templateDir;
+    this.templateExtension = templateExtension;
+  }
+
+  @Before
+  public void setup() throws Exception {
+    currentLocale = Locale.getDefault();
+    Locale.setDefault(Locale.ENGLISH);
+
+    ModelExtractorsDocumentTypeListener listener = new ModelExtractorsDocumentTypeListener();
+    DocumentTypes.addListener(listener);
+
+    templateFolder = new File(sourceFolder, templateDir);
+    if (!templateFolder.exists()) {
+      throw new Exception("Cannot find template folder!");
     }
 
-    @Before
-    public void setup() throws Exception {
-        currentLocale = Locale.getDefault();
-        Locale.setDefault(Locale.ENGLISH);
-
-        ModelExtractorsDocumentTypeListener listener = new ModelExtractorsDocumentTypeListener();
-        DocumentTypes.addListener(listener);
-
-        templateFolder = new File(sourceFolder, templateDir);
-        if (!templateFolder.exists()) {
-            throw new Exception("Cannot find template folder!");
-        }
-
-        destinationFolder = folder.getRoot();
-        config.setDestinationFolder(destinationFolder);
-        config.setTemplateFolder(templateFolder);
+    destinationFolder = folder.getRoot();
+    config.setDestinationFolder(destinationFolder);
+    config.setTemplateFolder(templateFolder);
 
 
-        for (String docType : DocumentTypes.getDocumentTypes()) {
-            File templateFile = config.getTemplateFileByDocType(docType);
+    for (String docType : DocumentTypes.getDocumentTypes()) {
+      File templateFile = config.getTemplateFileByDocType(docType);
 
-            if (templateFile != null) {
-                String fileName = templateFile.getName();
-                String fileBaseName = fileName.substring(0, fileName.lastIndexOf("."));
-                config.setTemplateFileNameForDocType(docType, fileBaseName + "." + templateExtension);
-            }
-        }
-
-        config.setTemplateFileNameForDocType("paper", "paper." + templateExtension);
-        DocumentTypes.addDocumentType("paper");
-        db.updateSchema();
-
-        Assert.assertEquals(".html", config.getOutputExtension());
-
-        Crawler crawler = new Crawler(db, config);
-        crawler.crawl();
-        parser = new Parser(config);
-        renderer = new Renderer(db, config);
-
-        setupExpectedOutputStrings();
+      if (templateFile != null) {
+        String fileName = templateFile.getName();
+        String fileBaseName = fileName.substring(0, fileName.lastIndexOf("."));
+        config.setTemplateFileNameForDocType(docType, fileBaseName + "." + templateExtension);
+      }
     }
 
-    private void setupExpectedOutputStrings() {
+    config.setTemplateFileNameForDocType("paper", "paper." + templateExtension);
+    DocumentTypes.addDocumentType("paper");
+    db.updateSchema();
 
-        outputStrings.put("post", Arrays.asList("<h2>Second Post</h2>",
-                "<p class=\"post-date\">28",
-                "2013</p>",
-                "Lorem ipsum dolor sit amet",
-                "<h5>Published Posts</h5>",
-                "blog/2012/first-post.html"));
+    Assert.assertEquals(".html", config.getOutputExtension());
 
-        outputStrings.put("page", Arrays.asList("<h4>About</h4>",
-                "All about stuff!",
-                "<h5>Published Pages</h5>",
-                "/projects.html"));
+    Crawler crawler = new Crawler(db, config);
+    crawler.crawl();
+    parser = new Parser(config);
+    renderer = new Renderer(db, config);
 
-        outputStrings.put("index", Arrays.asList("<a href=\"blog/2016/another-post.html\"",
-                ">Another Post</a>",
-                "<a href=\"blog/2013/second-post.html\"",
-                ">Second Post</a>"));
+    setupExpectedOutputStrings();
+  }
 
-        outputStrings.put("feed", Arrays.asList("<description>My corner of the Internet</description>",
-                "<title>Second Post</title>",
-                "<title>First Post</title>"));
+  private void setupExpectedOutputStrings() {
 
-        outputStrings.put("archive", Arrays.asList("<a href=\"blog/2013/second-post.html\"",
-                ">Second Post</a>",
-                "<a href=\"blog/2012/first-post.html\"",
-                ">First Post</a>"));
+    outputStrings.put("post", Arrays.asList("<h2>Second Post</h2>",
+      "<p class=\"post-date\">28",
+      "2013</p>",
+      "Lorem ipsum dolor sit amet",
+      "<h5>Published Posts</h5>",
+      "blog/2012/first-post.html"));
 
-        outputStrings.put("tags", Arrays.asList("<a href=\"blog/2013/second-post.html\"",
-                ">Second Post</a>",
-                "<a href=\"blog/2012/first-post.html\"",
-                ">First Post</a>"));
+    outputStrings.put("page", Arrays.asList("<h4>About</h4>",
+      "All about stuff!",
+      "<h5>Published Pages</h5>",
+      "/projects.html"));
 
-        outputStrings.put("tags-index", Arrays.asList("<h1>Tags</h1>",
-                "<h2><a href=\"../tags/blog.html\">blog</a>",
-                "3</h2>"));
+    outputStrings.put("index", Arrays.asList("<a href=\"blog/2016/another-post.html\"",
+      ">Another Post</a>",
+      "<a href=\"blog/2013/second-post.html\"",
+      ">Second Post</a>"));
 
-        outputStrings.put("sitemap", Arrays.asList("blog/2013/second-post.html",
-                "blog/2012/first-post.html",
-                "papers/published-paper.html"));
+    outputStrings.put("feed", Arrays.asList("<description>My corner of the Internet</description>",
+      "<title>Second Post</title>",
+      "<title>First Post</title>"));
 
+    outputStrings.put("archive", Arrays.asList("<a href=\"blog/2013/second-post.html\"",
+      ">Second Post</a>",
+      "<a href=\"blog/2012/first-post.html\"",
+      ">First Post</a>"));
+
+    outputStrings.put("tags", Arrays.asList("<a href=\"blog/2013/second-post.html\"",
+      ">Second Post</a>",
+      "<a href=\"blog/2012/first-post.html\"",
+      ">First Post</a>"));
+
+    outputStrings.put("tags-index", Arrays.asList("<h1>Tags</h1>",
+      "<h2><a href=\"../tags/blog.html\">blog</a>",
+      "3</h2>"));
+
+    outputStrings.put("sitemap", Arrays.asList("blog/2013/second-post.html",
+      "blog/2012/first-post.html",
+      "papers/published-paper.html"));
+
+  }
+
+  @After
+  public void cleanup() {
+    DocumentTypes.resetDocumentTypes();
+    ModelExtractors.getInstance().reset();
+    Locale.setDefault(currentLocale);
+  }
+
+  @Test
+  public void renderPost() throws Exception {
+    // setup
+    String filename = "second-post.html";
+
+    File sampleFile = new File(sourceFolder.getPath() + File.separator + "content"
+      + File.separator + "blog" + File.separator + "2013" + File.separator + filename);
+    DocumentModel content = parser.processFile(sampleFile);
+    content.setUri("/" + filename);
+    renderer.render(content);
+    File outputFile = new File(destinationFolder, filename);
+    Assert.assertTrue(outputFile.exists());
+
+    // verify
+    String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
+    for (String string : getOutputStrings("post")) {
+      assertThat(output).contains(string);
+    }
+  }
+
+  @Test
+  public void renderPage() throws Exception {
+    // setup
+    String filename = "about.html";
+
+    File sampleFile = new File(sourceFolder.getPath() + File.separator + "content" + File.separator + filename);
+    DocumentModel content = parser.processFile(sampleFile);
+    content.setUri("/" + filename);
+    renderer.render(content);
+    File outputFile = new File(destinationFolder, filename);
+    Assert.assertTrue(outputFile.exists());
+
+    // verify
+    String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
+    for (String string : getOutputStrings("page")) {
+      assertThat(output).contains(string);
+    }
+  }
+
+  @Test
+  public void renderIndex() throws Exception {
+    //exec
+    renderer.renderIndex("index.html");
+
+    //validate
+    File outputFile = new File(destinationFolder, "index.html");
+    Assert.assertTrue(outputFile.exists());
+
+    // verify
+    String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
+    for (String string : getOutputStrings("index")) {
+      assertThat(output).contains(string);
+    }
+  }
+
+  @Test
+  public void renderFeed() throws Exception {
+    renderer.renderFeed("feed.xml");
+    File outputFile = new File(destinationFolder, "feed.xml");
+    Assert.assertTrue(outputFile.exists());
+
+    // verify
+    String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
+    for (String string : getOutputStrings("feed")) {
+      assertThat(output).contains(string);
+    }
+  }
+
+  @Test
+  public void renderArchive() throws Exception {
+    renderer.renderArchive("archive.html");
+    File outputFile = new File(destinationFolder, "archive.html");
+    Assert.assertTrue(outputFile.exists());
+
+    // verify
+    String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
+    for (String string : getOutputStrings("archive")) {
+      assertThat(output).contains(string);
+    }
+  }
+
+  @Test
+  public void renderTags() throws Exception {
+    renderer.renderTags("tags");
+
+    // verify
+    File outputFile = new File(destinationFolder + File.separator + "tags" + File.separator + "blog.html");
+    Assert.assertTrue(outputFile.exists());
+    String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
+    for (String string : getOutputStrings("tags")) {
+      assertThat(output).contains(string);
+    }
+  }
+
+  @Test
+  public void renderTagsIndex() throws Exception {
+    config.setRenderTagsIndex(true);
+
+    renderer.renderTags("tags");
+    File outputFile = new File(destinationFolder + File.separator + "tags" + File.separator + "index.html");
+    Assert.assertTrue(outputFile.exists());
+    String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
+    for (String string : getOutputStrings("tags-index")) {
+      assertThat(output).contains(string);
     }
 
-    @After
-    public void cleanup() {
-        DocumentTypes.resetDocumentTypes();
-        ModelExtractors.getInstance().reset();
-        Locale.setDefault(currentLocale);
+  }
+
+  @Test
+  public void renderSitemap() throws Exception {
+    DocumentTypes.addDocumentType("paper");
+    db.updateSchema();
+
+    renderer.renderSitemap("sitemap.xml");
+    File outputFile = new File(destinationFolder, "sitemap.xml");
+    Assert.assertTrue(outputFile.exists());
+
+    // verify
+    String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
+    for (String string : getOutputStrings("sitemap")) {
+      assertThat(output).contains(string);
+    }
+    assertThat(output).doesNotContain("draft-paper.html");
+  }
+
+  protected List<String> getOutputStrings(String type) {
+    return outputStrings.get(type);
+
+  }
+
+  @Test
+  public void checkDbTemplateModelIsPopulated() throws Exception {
+
+    config.setPaginateIndex(true);
+    config.setPostsPerPage(1);
+
+    outputStrings.put("dbSpan", Arrays.asList("<span>3</span>"));
+
+    db.deleteAllByDocType("post");
+
+    renderer.renderIndexPaging("index.html");
+
+    File outputFile = new File(destinationFolder, "index.html");
+    String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
+
+    for (String string : getOutputStrings("dbSpan")) {
+      assertThat(output).contains(string);
     }
 
-    @Test
-    public void renderPost() throws Exception {
-        // setup
-        String filename = "second-post.html";
-
-        File sampleFile = new File(sourceFolder.getPath() + File.separator + "content"
-                + File.separator + "blog" + File.separator + "2013" + File.separator + filename);
-        DocumentModel content = parser.processFile(sampleFile);
-        content.setUri("/" + filename);
-        renderer.render(content);
-        File outputFile = new File(destinationFolder, filename);
-        Assert.assertTrue(outputFile.exists());
-
-        // verify
-        String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
-        for (String string : getOutputStrings("post")) {
-            assertThat(output).contains(string);
-        }
-    }
-
-    @Test
-    public void renderPage() throws Exception {
-        // setup
-        String filename = "about.html";
-
-        File sampleFile = new File(sourceFolder.getPath() + File.separator + "content" + File.separator + filename);
-        DocumentModel content = parser.processFile(sampleFile);
-        content.setUri("/" + filename);
-        renderer.render(content);
-        File outputFile = new File(destinationFolder, filename);
-        Assert.assertTrue(outputFile.exists());
-
-        // verify
-        String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
-        for (String string : getOutputStrings("page")) {
-            assertThat(output).contains(string);
-        }
-    }
-
-    @Test
-    public void renderIndex() throws Exception {
-        //exec
-        renderer.renderIndex("index.html");
-
-        //validate
-        File outputFile = new File(destinationFolder, "index.html");
-        Assert.assertTrue(outputFile.exists());
-
-        // verify
-        String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
-        for (String string : getOutputStrings("index")) {
-            assertThat(output).contains(string);
-        }
-    }
-
-    @Test
-    public void renderFeed() throws Exception {
-        renderer.renderFeed("feed.xml");
-        File outputFile = new File(destinationFolder, "feed.xml");
-        Assert.assertTrue(outputFile.exists());
-
-        // verify
-        String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
-        for (String string : getOutputStrings("feed")) {
-            assertThat(output).contains(string);
-        }
-    }
-
-    @Test
-    public void renderArchive() throws Exception {
-        renderer.renderArchive("archive.html");
-        File outputFile = new File(destinationFolder, "archive.html");
-        Assert.assertTrue(outputFile.exists());
-
-        // verify
-        String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
-        for (String string : getOutputStrings("archive")) {
-            assertThat(output).contains(string);
-        }
-    }
-
-    @Test
-    public void renderTags() throws Exception {
-        renderer.renderTags("tags");
-
-        // verify
-        File outputFile = new File(destinationFolder + File.separator + "tags" + File.separator + "blog.html");
-        Assert.assertTrue(outputFile.exists());
-        String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
-        for (String string : getOutputStrings("tags")) {
-            assertThat(output).contains(string);
-        }
-    }
-
-    @Test
-    public void renderTagsIndex() throws Exception {
-        config.setRenderTagsIndex(true);
-
-        renderer.renderTags("tags");
-        File outputFile = new File(destinationFolder + File.separator + "tags" + File.separator + "index.html");
-        Assert.assertTrue(outputFile.exists());
-        String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
-        for (String string : getOutputStrings("tags-index")) {
-            assertThat(output).contains(string);
-        }
-
-    }
-
-    @Test
-    public void renderSitemap() throws Exception {
-        DocumentTypes.addDocumentType("paper");
-        db.updateSchema();
-
-        renderer.renderSitemap("sitemap.xml");
-        File outputFile = new File(destinationFolder, "sitemap.xml");
-        Assert.assertTrue(outputFile.exists());
-
-        // verify
-        String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
-        for (String string : getOutputStrings("sitemap")) {
-            assertThat(output).contains(string);
-        }
-        assertThat(output).doesNotContain("draft-paper.html");
-    }
-
-    protected List<String> getOutputStrings(String type) {
-        return outputStrings.get(type);
-
-    }
-
-    @Test
-    public void checkDbTemplateModelIsPopulated() throws Exception {
-
-        config.setPaginateIndex(true);
-        config.setPostsPerPage(1);
-
-        outputStrings.put("dbSpan", Arrays.asList("<span>3</span>"));
-
-        db.deleteAllByDocType("post");
-
-        renderer.renderIndexPaging("index.html");
-
-        File outputFile = new File(destinationFolder, "index.html");
-        String output = FileUtils.readFileToString(outputFile, Charset.defaultCharset());
-
-        for (String string : getOutputStrings("dbSpan")) {
-            assertThat(output).contains(string);
-        }
-
-    }
+  }
 }

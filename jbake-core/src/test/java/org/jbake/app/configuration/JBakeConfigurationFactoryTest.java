@@ -15,116 +15,114 @@ import static org.mockito.Mockito.verify;
 
 public class JBakeConfigurationFactoryTest {
 
-    @TempDir
-    File root;
+  @TempDir
+  File root;
 
-    @Test
-    public void shouldReturnDefaultConfigurationWithDefaultFolders() throws Exception {
-        File sourceFolder = root;
-        File destinationFolder = TestUtils.newFolder(root, "output");
-        File templateFolder = TestUtils.newFolder(root, "templates");
-        File assetFolder = TestUtils.newFolder(root, "assets");
+  @Test
+  public void shouldReturnDefaultConfigurationWithDefaultFolders() throws Exception {
+    File sourceFolder = root;
+    File destinationFolder = TestUtils.newFolder(root, "output");
+    File templateFolder = TestUtils.newFolder(root, "templates");
+    File assetFolder = TestUtils.newFolder(root, "assets");
 
-        JBakeConfiguration configuration = new JBakeConfigurationFactory().createDefaultJbakeConfiguration(sourceFolder, destinationFolder, true);
+    JBakeConfiguration configuration = new JBakeConfigurationFactory().createDefaultJbakeConfiguration(sourceFolder, destinationFolder, true);
 
-        assertThat(configuration.getSourceFolder()).isEqualTo(sourceFolder);
-        assertThat(configuration.getDestinationFolder()).isEqualTo(destinationFolder);
-        assertThat(configuration.getTemplateFolder()).isEqualTo(templateFolder);
-        assertThat(configuration.getAssetFolder()).isEqualTo(assetFolder);
-        assertThat(configuration.getClearCache()).isEqualTo(true);
-    }
+    assertThat(configuration.getSourceFolder()).isEqualTo(sourceFolder);
+    assertThat(configuration.getDestinationFolder()).isEqualTo(destinationFolder);
+    assertThat(configuration.getTemplateFolder()).isEqualTo(templateFolder);
+    assertThat(configuration.getAssetFolder()).isEqualTo(assetFolder);
+    assertThat(configuration.getClearCache()).isEqualTo(true);
+  }
 
-    @Test
-    public void shouldReturnDefaultConfigurationWithCustomFolders() throws Exception {
-        File sourceFolder = root;
-        File destinationFolder = TestUtils.newFolder(root, "output/custom");
-        File templateFolder = TestUtils.newFolder(root, "templates/custom");
-        File assetFolder = TestUtils.newFolder(root, "assets/custom");
-        File contentFolder = TestUtils.newFolder(root, "content/custom");
-
-
-        File properties = new File(sourceFolder, "jbake.properties");
-
-        FileWriter pw = new FileWriter(properties);
-        pw.write("template.folder=templates/custom\n");
-        pw.write("asset.folder=assets/custom\n");
-        pw.write("content.folder=content/custom\n");
-        pw.close();
-
-        JBakeConfiguration configuration = new JBakeConfigurationFactory().createDefaultJbakeConfiguration(sourceFolder, destinationFolder, true);
-
-        assertThat(configuration.getTemplateFolderName()).isEqualTo("templates/custom");
-        assertThat(configuration.getAssetFolderName()).isEqualTo("assets/custom");
-        assertThat(configuration.getContentFolderName()).isEqualTo("content/custom");
-
-        assertThat(configuration.getSourceFolder()).isEqualTo(sourceFolder);
-        assertThat(configuration.getDestinationFolder()).isEqualTo(destinationFolder);
-        assertThat(configuration.getTemplateFolder()).isEqualTo(templateFolder);
-        assertThat(configuration.getAssetFolder()).isEqualTo(assetFolder);
-        assertThat(configuration.getContentFolder()).isEqualTo(contentFolder);
-
-        assertThat(configuration.getClearCache()).isEqualTo(true);
-    }
+  @Test
+  public void shouldReturnDefaultConfigurationWithCustomFolders() throws Exception {
+    File sourceFolder = root;
+    File destinationFolder = TestUtils.newFolder(root, "output/custom");
+    File templateFolder = TestUtils.newFolder(root, "templates/custom");
+    File assetFolder = TestUtils.newFolder(root, "assets/custom");
+    File contentFolder = TestUtils.newFolder(root, "content/custom");
 
 
-    @Test
-    public void shouldReturnADefaultConfigurationWithSitehost() throws Exception {
-        File sourceFolder = root;
-        File destinationFolder = TestUtils.newFolder(root, "output");
-        String siteHost = "http://www.jbake.org";
+    File properties = new File(sourceFolder, "jbake.properties");
 
-        JBakeConfiguration configuration = new JBakeConfigurationFactory().createDefaultJbakeConfiguration(sourceFolder, destinationFolder, true);
+    FileWriter pw = new FileWriter(properties);
+    pw.write("template.folder=templates/custom\n");
+    pw.write("asset.folder=assets/custom\n");
+    pw.write("content.folder=content/custom\n");
+    pw.close();
 
-        assertThat(configuration.getSiteHost()).isEqualTo(siteHost);
-    }
+    JBakeConfiguration configuration = new JBakeConfigurationFactory().createDefaultJbakeConfiguration(sourceFolder, destinationFolder, true);
 
-    @Test
-    public void shouldReturnAJettyConfiguration() throws Exception {
-        File sourceFolder = root;
-        File destinationFolder = TestUtils.newFolder(root, "output");
-        String siteHost = "http://localhost:8820/";
+    assertThat(configuration.getTemplateFolderName()).isEqualTo("templates/custom");
+    assertThat(configuration.getAssetFolderName()).isEqualTo("assets/custom");
+    assertThat(configuration.getContentFolderName()).isEqualTo("content/custom");
 
-        JBakeConfiguration configuration = new JBakeConfigurationFactory().createJettyJbakeConfiguration(sourceFolder, destinationFolder, true);
+    assertThat(configuration.getSourceFolder()).isEqualTo(sourceFolder);
+    assertThat(configuration.getDestinationFolder()).isEqualTo(destinationFolder);
+    assertThat(configuration.getTemplateFolder()).isEqualTo(templateFolder);
+    assertThat(configuration.getAssetFolder()).isEqualTo(assetFolder);
+    assertThat(configuration.getContentFolder()).isEqualTo(contentFolder);
 
-        assertThat(configuration.getSiteHost()).isEqualTo(siteHost);
-    }
+    assertThat(configuration.getClearCache()).isEqualTo(true);
+  }
 
-    @Test
-    public void shouldUseDefaultEncodingUTF8() throws Exception {
-        File sourceFolder = root;
-        File destinationFolder = TestUtils.newFolder(root, "output");
-        JBakeConfigurationFactory factory = new JBakeConfigurationFactory();
-        JBakeConfiguration configuration = factory.createDefaultJbakeConfiguration(sourceFolder, destinationFolder, true);
 
-        assertThat(factory.getConfigUtil().getEncoding()).isEqualTo("UTF-8");
-    }
+  @Test
+  public void shouldReturnADefaultConfigurationWithSitehost() throws Exception {
+    File sourceFolder = root;
+    File destinationFolder = TestUtils.newFolder(root, "output");
+    String siteHost = "http://www.jbake.org";
 
-    @Test
-    public void shouldUseCustomEncoding() throws Exception {
+    JBakeConfiguration configuration = new JBakeConfigurationFactory().createDefaultJbakeConfiguration(sourceFolder, destinationFolder, true);
 
-        ConfigUtil util = spy(ConfigUtil.class);
-        File sourceFolder = root;
-        File destinationFolder = TestUtils.newFolder(root, "output");
-        JBakeConfigurationFactory factory = new JBakeConfigurationFactory();
-        factory.setConfigUtil(util);
-        JBakeConfiguration configuration = factory.setEncoding("latin1").createDefaultJbakeConfiguration(sourceFolder, destinationFolder, (File) null,true);
+    assertThat(configuration.getSiteHost()).isEqualTo(siteHost);
+  }
 
-        assertThat(factory.getConfigUtil().getEncoding()).isEqualTo("latin1");
-        verify(util).loadConfig(sourceFolder, null);
-    }
+  @Test
+  public void shouldReturnAJettyConfiguration() throws Exception {
+    File sourceFolder = root;
+    File destinationFolder = TestUtils.newFolder(root, "output");
+    String siteHost = "http://localhost:8820/";
 
-    @Test
-    void shouldBeAbleToAddCustomProperties() {
-        File sourceFolder = root;
-        File destinationFolder = TestUtils.newFolder(root, "output");
-        DefaultJBakeConfiguration config = new JBakeConfigurationFactory().createDefaultJbakeConfiguration(sourceFolder, destinationFolder, true);
-        Properties properties = new Properties();
-        properties.setProperty("custom.key", "custom value");
-        properties.setProperty("custom.key2", "custom value 2");
+    JBakeConfiguration configuration = new JBakeConfigurationFactory().createJettyJbakeConfiguration(sourceFolder, destinationFolder, true);
 
-        config.addConfiguration(properties);
+    assertThat(configuration.getSiteHost()).isEqualTo(siteHost);
+  }
 
-        assertThat(config.get("custom.key")).isEqualTo("custom value");
-        assertThat(config.get("custom.key2")).isEqualTo("custom value 2");
-    }
+  @Test
+  public void shouldUseDefaultEncodingUTF8() throws Exception {
+    File sourceFolder = root;
+    File destinationFolder = TestUtils.newFolder(root, "output");
+    JBakeConfigurationFactory factory = new JBakeConfigurationFactory();
+    assertThat(factory.getConfigUtil().getEncoding()).isEqualTo("UTF-8");
+  }
+
+  @Test
+  public void shouldUseCustomEncoding() throws Exception {
+
+    ConfigUtil util = spy(ConfigUtil.class);
+    File sourceFolder = root;
+    File destinationFolder = TestUtils.newFolder(root, "output");
+    JBakeConfigurationFactory factory = new JBakeConfigurationFactory();
+    factory.setConfigUtil(util);
+    JBakeConfiguration configuration = factory.setEncoding("latin1").createDefaultJbakeConfiguration(sourceFolder, destinationFolder, (File) null, true);
+
+    assertThat(factory.getConfigUtil().getEncoding()).isEqualTo("latin1");
+    verify(util).loadConfig(sourceFolder, null);
+  }
+
+  @Test
+  void shouldBeAbleToAddCustomProperties() {
+    File sourceFolder = root;
+    File destinationFolder = TestUtils.newFolder(root, "output");
+    DefaultJBakeConfiguration config = new JBakeConfigurationFactory().createDefaultJbakeConfiguration(sourceFolder, destinationFolder, true);
+    Properties properties = new Properties();
+    properties.setProperty("custom.key", "custom value");
+    properties.setProperty("custom.key2", "custom value 2");
+
+    config.addConfiguration(properties);
+
+    assertThat(config.get("custom.key")).isEqualTo("custom value");
+    assertThat(config.get("custom.key2")).isEqualTo("custom value 2");
+  }
 }

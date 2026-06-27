@@ -11,28 +11,28 @@ import java.util.Date;
  * @author Cédric Champeau
  */
 public class ErrorEngine extends MarkupEngine {
-    private final String engineName;
+  private final String engineName;
 
-    public ErrorEngine() {
-        this("unknown");
-    }
+  public ErrorEngine() {
+    this("unknown");
+  }
 
-    public ErrorEngine(final String name) {
-        engineName = name;
-    }
+  public ErrorEngine(final String name) {
+    engineName = name;
+  }
 
-    @Override
-    public void processHeader(final ParserContext context) {
-        DocumentModel documentModel = context.getDocumentModel();
-        documentModel.setType("post");
-        documentModel.setStatus("published");
-        documentModel.setTitle("Rendering engine missing");
-        documentModel.setDate(new Date());
-        documentModel.setTags(new String[0]);
-    }
+  @Override
+  public void processHeader(final ParserContext context) {
+    DocumentModel documentModel = context.getDocumentModel();
+    documentModel.setType("post");
+    documentModel.setStatus("published");
+    documentModel.setTitle("Rendering engine missing");
+    documentModel.setDate(new Date());
+    documentModel.setTags(new String[0]);
+  }
 
-    @Override
-    public void processBody(final ParserContext context) {
-        context.setBody("The markup engine [" + engineName + "] for [" + context.getFile() + "] couldn't be loaded");
-    }
+  @Override
+  public void processBody(final ParserContext context) {
+    context.setBody("The markup engine [" + engineName + "] for [" + context.getFile() + "] couldn't be loaded");
+  }
 }

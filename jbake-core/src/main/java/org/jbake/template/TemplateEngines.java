@@ -38,81 +38,80 @@ import java.util.Set;
  */
 public class TemplateEngines {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TemplateEngines.class);
+  private static final Logger LOGGER = LoggerFactory.getLogger(TemplateEngines.class);
 
-    private final Map<String, AbstractTemplateEngine> engines;
+  private final Map<String, AbstractTemplateEngine> engines;
 
-    public Set<String> getRecognizedExtensions() {
-        return Collections.unmodifiableSet(engines.keySet());
+  public Set<String> getRecognizedExtensions() {
+    return Collections.unmodifiableSet(engines.keySet());
+  }
+
+  public TemplateEngines(final JBakeConfiguration config, final ContentStore db) {
+    engines = new HashMap<>();
+    loadEngines(config, db);
+  }
+
+  private void registerEngine(String fileExtension, AbstractTemplateEngine templateEngine) {
+    AbstractTemplateEngine old = engines.put(fileExtension, templateEngine);
+    if (old != null) {
+      LOGGER.warn("Registered a template engine for extension [.{}] but another one was already defined: {}", fileExtension, old);
     }
+  }
 
-    public TemplateEngines(final JBakeConfiguration config, final ContentStore db) {
-        engines = new HashMap<>();
-        loadEngines(config, db);
+  public AbstractTemplateEngine getEngine(String fileExtension) {
+    return engines.get(fileExtension);
+  }
+
+  /**
+   * This method is used to search for a specific class, telling if loading the engine would succeed. This is
+   * typically used to avoid loading optional modules.
+   *
+   * @param config          the configuration
+   * @param db              database instance
+   * @param engineClassName engine class, used both as a hint to find it and to create the engine itself.  @return null if the engine is not available, an instance of the engine otherwise
+   */
+  private static AbstractTemplateEngine tryLoadEngine(final JBakeConfiguration config, final ContentStore db, String engineClassName) {
+    try {
+      @SuppressWarnings("unchecked")
+      Class<? extends AbstractTemplateEngine> engineClass = (Class<? extends AbstractTemplateEngine>) Class.forName(engineClassName, false, TemplateEngines.class.getClassLoader());
+      Constructor<? extends AbstractTemplateEngine> ctor = engineClass.getConstructor(JBakeConfiguration.class, ContentStore.class);
+      return ctor.newInstance(config, db);
+    } catch (Throwable e) {
+      // not all engines might be necessary, therefore only emit class loading issue with level warn
+      LOGGER.debug("Template engine not available: {}", engineClassName);
+      return null;
     }
+  }
 
-    private void registerEngine(String fileExtension, AbstractTemplateEngine templateEngine) {
-        AbstractTemplateEngine old = engines.put(fileExtension, templateEngine);
-        if (old != null) {
-            LOGGER.warn("Registered a template engine for extension [.{}] but another one was already defined: {}", fileExtension, old);
+  /**
+   * This method is used internally to load markup engines. Markup engines are found using descriptor files on
+   * classpath, so adding an engine is as easy as adding a jar on classpath with the descriptor file included.
+   */
+  private void loadEngines(final JBakeConfiguration config, final ContentStore db) {
+    try {
+      ClassLoader cl = TemplateEngines.class.getClassLoader();
+      Enumeration<URL> resources = cl.getResources("META-INF/org.jbake.parser.TemplateEngines.properties");
+      while (resources.hasMoreElements()) {
+        URL url = resources.nextElement();
+        Properties props = new Properties();
+        props.load(url.openStream());
+        for (Map.Entry<Object, Object> entry : props.entrySet()) {
+          String className = (String) entry.getKey();
+          String[] extensions = ((String) entry.getValue()).split(",");
+          registerEngine(config, db, className, extensions);
         }
+      }
+    } catch (IOException e) {
+      LOGGER.error("Error loading engines", e);
     }
+  }
 
-    public AbstractTemplateEngine getEngine(String fileExtension) {
-        return engines.get(fileExtension);
+  private void registerEngine(final JBakeConfiguration config, final ContentStore db, String className, String... extensions) {
+    AbstractTemplateEngine engine = tryLoadEngine(config, db, className);
+    if (engine != null) {
+      for (String extension : extensions) {
+        registerEngine(extension, engine);
+      }
     }
-
-    /**
-     * This method is used to search for a specific class, telling if loading the engine would succeed. This is
-     * typically used to avoid loading optional modules.
-     *
-     *
-     * @param config the configuration
-     * @param db database instance
-     * @param engineClassName engine class, used both as a hint to find it and to create the engine itself.  @return null if the engine is not available, an instance of the engine otherwise
-     */
-    private static AbstractTemplateEngine tryLoadEngine(final JBakeConfiguration config, final ContentStore db, String engineClassName) {
-        try {
-            @SuppressWarnings("unchecked")
-            Class<? extends AbstractTemplateEngine> engineClass = (Class<? extends AbstractTemplateEngine>) Class.forName(engineClassName, false, TemplateEngines.class.getClassLoader());
-            Constructor<? extends AbstractTemplateEngine> ctor = engineClass.getConstructor(JBakeConfiguration.class, ContentStore.class);
-            return ctor.newInstance(config, db);
-        } catch (Throwable e) {
-            // not all engines might be necessary, therefore only emit class loading issue with level warn
-            LOGGER.debug("Template engine not available: {}", engineClassName);
-            return null;
-        }
-    }
-
-    /**
-     * This method is used internally to load markup engines. Markup engines are found using descriptor files on
-     * classpath, so adding an engine is as easy as adding a jar on classpath with the descriptor file included.
-     */
-    private void loadEngines(final JBakeConfiguration config, final ContentStore db) {
-        try {
-            ClassLoader cl = TemplateEngines.class.getClassLoader();
-            Enumeration<URL> resources = cl.getResources("META-INF/org.jbake.parser.TemplateEngines.properties");
-            while (resources.hasMoreElements()) {
-                URL url = resources.nextElement();
-                Properties props = new Properties();
-                props.load(url.openStream());
-                for (Map.Entry<Object, Object> entry : props.entrySet()) {
-                    String className = (String) entry.getKey();
-                    String[] extensions = ((String) entry.getValue()).split(",");
-                    registerEngine(config, db, className, extensions);
-                }
-            }
-        } catch (IOException e) {
-            LOGGER.error("Error loading engines", e);
-        }
-    }
-
-    private void registerEngine(final JBakeConfiguration config, final ContentStore db, String className, String... extensions) {
-        AbstractTemplateEngine engine = tryLoadEngine(config, db, className);
-        if (engine != null) {
-            for (String extension : extensions) {
-                registerEngine(extension, engine);
-            }
-        }
-    }
+  }
 }

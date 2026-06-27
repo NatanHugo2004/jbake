@@ -18,85 +18,85 @@ import static org.mockito.Mockito.when;
 
 public class SitemapRendererTest {
 
-    @Test
-    public void returnsZeroWhenConfigDoesNotRenderSitemaps() throws RenderingException {
-        SitemapRenderer renderer = new SitemapRenderer();
+  @Test
+  public void returnsZeroWhenConfigDoesNotRenderSitemaps() throws RenderingException {
+    SitemapRenderer renderer = new SitemapRenderer();
 
-        JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
-        when(configuration.getRenderSiteMap()).thenReturn(false);
+    JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
+    when(configuration.getRenderSiteMap()).thenReturn(false);
 
-        ContentStore contentStore = mock(ContentStore.class);
+    ContentStore contentStore = mock(ContentStore.class);
 
-        Renderer mockRenderer = mock(Renderer.class);
-        int renderResponse = renderer.render(mockRenderer, contentStore, configuration);
+    Renderer mockRenderer = mock(Renderer.class);
+    int renderResponse = renderer.render(mockRenderer, contentStore, configuration);
 
-        assertThat(renderResponse).isEqualTo(0);
-    }
+    assertThat(renderResponse).isEqualTo(0);
+  }
 
-    @Test
-    public void doesNotRenderWhenConfigDoesNotRenderSitemaps() throws Exception {
-        SitemapRenderer renderer = new SitemapRenderer();
+  @Test
+  public void doesNotRenderWhenConfigDoesNotRenderSitemaps() throws Exception {
+    SitemapRenderer renderer = new SitemapRenderer();
 
-        JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
-        when(configuration.getRenderSiteMap()).thenReturn(false);
+    JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
+    when(configuration.getRenderSiteMap()).thenReturn(false);
 
-        ContentStore contentStore = mock(ContentStore.class);
-        Renderer mockRenderer = mock(Renderer.class);
+    ContentStore contentStore = mock(ContentStore.class);
+    Renderer mockRenderer = mock(Renderer.class);
 
-        renderer.render(mockRenderer, contentStore, configuration);
+    renderer.render(mockRenderer, contentStore, configuration);
 
-        verify(mockRenderer, never()).renderSitemap(anyString());
-    }
+    verify(mockRenderer, never()).renderSitemap(anyString());
+  }
 
-    @Test
-    public void returnsOneWhenConfigRendersSitemaps() throws RenderingException {
-        SitemapRenderer renderer = new SitemapRenderer();
+  @Test
+  public void returnsOneWhenConfigRendersSitemaps() throws RenderingException {
+    SitemapRenderer renderer = new SitemapRenderer();
 
-        JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
-        when(configuration.getRenderSiteMap()).thenReturn(true);
+    JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
+    when(configuration.getRenderSiteMap()).thenReturn(true);
 
-        ContentStore contentStore = mock(ContentStore.class);
+    ContentStore contentStore = mock(ContentStore.class);
 
-        Renderer mockRenderer = mock(Renderer.class);
+    Renderer mockRenderer = mock(Renderer.class);
 
-        int renderResponse = renderer.render(mockRenderer, contentStore, configuration);
+    int renderResponse = renderer.render(mockRenderer, contentStore, configuration);
 
-        assertThat(renderResponse).isEqualTo(1);
-    }
+    assertThat(renderResponse).isEqualTo(1);
+  }
 
-    @Test
-    public void doesRenderWhenConfigDoesRenderSitemaps() throws Exception {
-        SitemapRenderer renderer = new SitemapRenderer();
+  @Test
+  public void doesRenderWhenConfigDoesRenderSitemaps() throws Exception {
+    SitemapRenderer renderer = new SitemapRenderer();
 
-        JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
-        when(configuration.getRenderSiteMap()).thenReturn(true);
-        when(configuration.getSiteMapFileName()).thenReturn("mocksitemap.html");
+    JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
+    when(configuration.getRenderSiteMap()).thenReturn(true);
+    when(configuration.getSiteMapFileName()).thenReturn("mocksitemap.html");
 
-        ContentStore contentStore = mock(ContentStore.class);
-        Renderer mockRenderer = mock(Renderer.class);
+    ContentStore contentStore = mock(ContentStore.class);
+    Renderer mockRenderer = mock(Renderer.class);
 
-        renderer.render(mockRenderer, contentStore, configuration);
+    renderer.render(mockRenderer, contentStore, configuration);
 
-        verify(mockRenderer, times(1)).renderSitemap(anyString());
-    }
+    verify(mockRenderer, times(1)).renderSitemap(anyString());
+  }
 
-    @Test(expected = RenderingException.class)
-    public void propogatesRenderingException() throws Exception {
-        SitemapRenderer renderer = new SitemapRenderer();
+  @Test(expected = RenderingException.class)
+  public void propogatesRenderingException() throws Exception {
+    SitemapRenderer renderer = new SitemapRenderer();
 
-        JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
-        when(configuration.getRenderSiteMap()).thenReturn(true);
-        when(configuration.getSiteMapFileName()).thenReturn("mocksitemap.html");
+    JBakeConfiguration configuration = mock(DefaultJBakeConfiguration.class);
+    when(configuration.getRenderSiteMap()).thenReturn(true);
+    when(configuration.getSiteMapFileName()).thenReturn("mocksitemap.html");
 
-        ContentStore contentStore = mock(ContentStore.class);
-        Renderer mockRenderer = mock(Renderer.class);
+    ContentStore contentStore = mock(ContentStore.class);
+    Renderer mockRenderer = mock(Renderer.class);
 
-        doThrow(new Exception()).when(mockRenderer).renderSitemap(anyString());
+    doThrow(new Exception()).when(mockRenderer).renderSitemap(anyString());
 
-        renderer.render(mockRenderer, contentStore, configuration);
+    renderer.render(mockRenderer, contentStore, configuration);
 
-        verify(mockRenderer, never()).renderSitemap(anyString());
-    }
+    verify(mockRenderer, never()).renderSitemap(anyString());
+  }
 
 }
 

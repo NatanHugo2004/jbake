@@ -24,43 +24,43 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class JettyServerTest {
 
-    @Mock
-    JBakeConfiguration jBakeConfiguration;
+  @Mock
+  JBakeConfiguration jBakeConfiguration;
 
-    @Test
-    void shouldRunWithCustomPortAndContext(@TempDir Path output) throws Exception {
-        File out = output.resolve("build/jbake").toFile();
-        out.mkdirs();
+  @Test
+  void shouldRunWithCustomPortAndContext(@TempDir Path output) throws Exception {
+    File out = output.resolve("build/jbake").toFile();
+    out.mkdirs();
 
-        File source = TestUtils.getTestResourcesAsSourceFolder();
-        int port = getRandoport();
-        when(jBakeConfiguration.getServerPort()).thenReturn(port);
-        when(jBakeConfiguration.getServerHostname()).thenReturn("localhost");
-        when(jBakeConfiguration.getServerContextPath()).thenReturn("/foo");
+    File source = TestUtils.getTestResourcesAsSourceFolder();
+    int port = getRandoport();
+    when(jBakeConfiguration.getServerPort()).thenReturn(port);
+    when(jBakeConfiguration.getServerHostname()).thenReturn("localhost");
+    when(jBakeConfiguration.getServerContextPath()).thenReturn("/foo");
 
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
 
-        try(JettyServer server = new JettyServer()) {
+    try (JettyServer server = new JettyServer()) {
 
-            executorService.execute(()->server.run(source.getAbsolutePath(), jBakeConfiguration));
+      executorService.execute(() -> server.run(source.getAbsolutePath(), jBakeConfiguration));
 
-            while (!server.isStarted()) {
-                System.out.println("waiting until jetty is running");
-                Thread.sleep(100);
-            }
+      while (!server.isStarted()) {
+        System.out.println("waiting until jetty is running");
+        Thread.sleep(100);
+      }
 
-            URL url = new URL("http://localhost:"+port+"/foo/content/about.html");
-            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            con.setRequestMethod("GET");
+      URL url = new URL("http://localhost:" + port + "/foo/content/about.html");
+      HttpURLConnection con = (HttpURLConnection) url.openConnection();
+      con.setRequestMethod("GET");
 
-            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
-            assertThat(in.readLine()).isEqualTo("title=About");
-        }
+      BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+      assertThat(in.readLine()).isEqualTo("title=About");
     }
+  }
 
-    private int getRandoport() throws Exception {
-        try (ServerSocket socket = new ServerSocket(0)){
-            return socket.getLocalPort();
-        }
+  private int getRandoport() throws Exception {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return socket.getLocalPort();
     }
+  }
 }

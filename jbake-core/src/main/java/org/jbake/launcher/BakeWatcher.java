@@ -18,45 +18,44 @@ import org.slf4j.LoggerFactory;
  */
 public class BakeWatcher {
 
-    private final Logger logger = LoggerFactory.getLogger(BakeWatcher.class);
+  private final Logger logger = LoggerFactory.getLogger(BakeWatcher.class);
 
-    /**
-     * Starts watching the file system for changes to trigger a bake.
-     *
-     * @deprecated use {@link BakeWatcher#start(JBakeConfiguration)} instead
-     *
-     * @param res    Commandline options
-     * @param config Configuration settings
-     */
-    @Deprecated
-    public void start(final LaunchOptions res, CompositeConfiguration config) {
-        JBakeConfiguration configuration = new JBakeConfigurationFactory().createDefaultJbakeConfiguration(res.getSource(), config);
-        start(configuration);
+  /**
+   * Starts watching the file system for changes to trigger a bake.
+   *
+   * @param res    Commandline options
+   * @param config Configuration settings
+   * @deprecated use {@link BakeWatcher#start(JBakeConfiguration)} instead
+   */
+  @Deprecated
+  public void start(final LaunchOptions res, CompositeConfiguration config) {
+    JBakeConfiguration configuration = new JBakeConfigurationFactory().createDefaultJbakeConfiguration(res.getSource(), config);
+    start(configuration);
+  }
+
+  /**
+   * Starts watching the file system for changes to trigger a bake.
+   *
+   * @param config JBakeConfiguration settings
+   */
+  public void start(JBakeConfiguration config) {
+    try {
+      FileSystemManager fsMan = VFS.getManager();
+      FileObject listenPath = fsMan.resolveFile(config.getContentFolder().toURI());
+      FileObject templateListenPath = fsMan.resolveFile(config.getTemplateFolder().toURI());
+      FileObject assetPath = fsMan.resolveFile(config.getAssetFolder().toURI());
+      FileObject dataPath = fsMan.resolveFile(config.getDataFolder().toURI());
+
+      logger.info("Watching for (content, data, template, asset) changes in [{}]", config.getSourceFolder().getPath());
+      DefaultFileMonitor monitor = new DefaultFileMonitor(new CustomFSChangeListener(config));
+      monitor.setRecursive(true);
+      monitor.addFile(listenPath);
+      monitor.addFile(templateListenPath);
+      monitor.addFile(assetPath);
+      monitor.addFile(dataPath);
+      monitor.start();
+    } catch (FileSystemException e) {
+      logger.error("Problems watching filesystem changes", e);
     }
-
-    /**
-     * Starts watching the file system for changes to trigger a bake.
-     *
-     * @param config JBakeConfiguration settings
-     */
-    public void start(JBakeConfiguration config) {
-        try {
-            FileSystemManager fsMan = VFS.getManager();
-            FileObject listenPath = fsMan.resolveFile(config.getContentFolder().toURI());
-            FileObject templateListenPath = fsMan.resolveFile(config.getTemplateFolder().toURI());
-            FileObject assetPath = fsMan.resolveFile(config.getAssetFolder().toURI());
-            FileObject dataPath = fsMan.resolveFile(config.getDataFolder().toURI());
-
-            logger.info("Watching for (content, data, template, asset) changes in [{}]", config.getSourceFolder().getPath());
-            DefaultFileMonitor monitor = new DefaultFileMonitor(new CustomFSChangeListener(config));
-            monitor.setRecursive(true);
-            monitor.addFile(listenPath);
-            monitor.addFile(templateListenPath);
-            monitor.addFile(assetPath);
-            monitor.addFile(dataPath);
-            monitor.start();
-        } catch (FileSystemException e) {
-            logger.error("Problems watching filesystem changes", e);
-        }
-    }
+  }
 }

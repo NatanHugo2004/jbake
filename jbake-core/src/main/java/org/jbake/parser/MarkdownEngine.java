@@ -19,53 +19,53 @@ import java.util.List;
  */
 public class MarkdownEngine extends MarkupEngine {
 
-    private static final Logger logger = LoggerFactory.getLogger(MarkdownEngine.class);
+  private static final Logger logger = LoggerFactory.getLogger(MarkdownEngine.class);
 
-    @Override
-    public void processBody(final ParserContext context) {
-        List<String> mdExts = context.getConfig().getMarkdownExtensions();
+  @Override
+  public void processBody(final ParserContext context) {
+    List<String> mdExts = context.getConfig().getMarkdownExtensions();
 
-        int extensions = PegdownExtensions.NONE;
+    int extensions = PegdownExtensions.NONE;
 
-        for (String ext : mdExts) {
-            if (ext.startsWith("-")) {
-                ext = ext.substring(1);
-                extensions = removeExtension(extensions, extensionFor(ext));
-            } else {
-                if (ext.startsWith("+")) {
-                    ext = ext.substring(1);
-                }
-                extensions = addExtension(extensions, extensionFor(ext));
-            }
+    for (String ext : mdExts) {
+      if (ext.startsWith("-")) {
+        ext = ext.substring(1);
+        extensions = removeExtension(extensions, extensionFor(ext));
+      } else {
+        if (ext.startsWith("+")) {
+          ext = ext.substring(1);
         }
-
-        DataHolder options = PegdownOptionsAdapter.flexmarkOptions(extensions);
-
-        Parser parser = Parser.builder(options).build();
-        HtmlRenderer renderer = HtmlRenderer.builder(options).build();
-
-        Document document = parser.parse(context.getBody());
-        context.setBody(renderer.render(document));
+        extensions = addExtension(extensions, extensionFor(ext));
+      }
     }
 
-    private int extensionFor(String name) {
-        int extension = PegdownExtensions.NONE;
+    DataHolder options = PegdownOptionsAdapter.flexmarkOptions(extensions);
 
-        try {
-            Field extField = PegdownExtensions.class.getDeclaredField(name);
-            extension = extField.getInt(null);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            logger.debug("Undeclared extension field '{}', fallback to NONE", name);
-        }
-        return extension;
-    }
+    Parser parser = Parser.builder(options).build();
+    HtmlRenderer renderer = HtmlRenderer.builder(options).build();
 
-    private int addExtension(int previousExtensions, int additionalExtension) {
-        return previousExtensions | additionalExtension;
-    }
+    Document document = parser.parse(context.getBody());
+    context.setBody(renderer.render(document));
+  }
 
-    private int removeExtension(int previousExtensions, int unwantedExtension) {
-        return previousExtensions & (~unwantedExtension);
+  private int extensionFor(String name) {
+    int extension = PegdownExtensions.NONE;
+
+    try {
+      Field extField = PegdownExtensions.class.getDeclaredField(name);
+      extension = extField.getInt(null);
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      logger.debug("Undeclared extension field '{}', fallback to NONE", name);
     }
+    return extension;
+  }
+
+  private int addExtension(int previousExtensions, int additionalExtension) {
+    return previousExtensions | additionalExtension;
+  }
+
+  private int removeExtension(int previousExtensions, int unwantedExtension) {
+    return previousExtensions & (~unwantedExtension);
+  }
 
 }
