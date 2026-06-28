@@ -35,7 +35,7 @@ import java.util.Date;
  */
 public class FreemarkerTemplateEngine extends AbstractTemplateEngine {
   private static final Logger logger =
-    LoggerFactory.getLogger(FreemarkerTemplateEngine.class);
+      LoggerFactory.getLogger(FreemarkerTemplateEngine.class);
   private Configuration templateCfg;
 
   @Deprecated

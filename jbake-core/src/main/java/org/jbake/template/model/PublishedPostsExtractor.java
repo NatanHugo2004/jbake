@@ -6,6 +6,10 @@ import org.jbake.template.ModelExtractor;
 
 import java.util.Map;
 
+/**
+ * Extractor implementation that retrieves a list of published documents
+ * associated with a specific tag from the content store.
+ */
 public class PublishedPostsExtractor implements ModelExtractor<DocumentList> {
 
   @Override

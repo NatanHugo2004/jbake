@@ -20,6 +20,7 @@ import java.util.TreeMap;
  * <p>A singleton class giving access to model extractors. Model extractors are loaded based on classpath. New
  * rendering may be registered either at runtime (not recommanded) or by putting a descriptor file on classpath
  * (recommanded).</p>
+ *
  * <p>The descriptor file must be found in <i>META-INF</i> directory and named
  * <i>org.jbake.template.ModelExtractors.properties</i>. The format of the file is easy:</p>
  * <code>org.jbake.template.model.AllPosts=all_posts<br> org.jbake.template.model.AllContent=all_content<br> </code>

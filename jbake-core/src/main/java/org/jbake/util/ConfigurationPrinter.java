@@ -6,6 +6,11 @@ import org.jbake.app.configuration.Property;
 import java.io.PrintStream;
 import java.util.List;
 
+/**
+ * Utility class responsible for printing the current JBake configuration
+ * properties to a specified print stream.
+ */
+
 public class ConfigurationPrinter {
 
   private PrintStream out;

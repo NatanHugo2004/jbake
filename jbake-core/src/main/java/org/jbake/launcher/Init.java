@@ -40,40 +40,50 @@ public class Init {
    * @throws Exception if required folder structure can't be achieved without content overwriting
    */
   public void run(File outputFolder, File templateLocationFolder, String templateType) throws Exception {
-    if (!outputFolder.canWrite()) {
-      throw new Exception("Output folder is not writeable!");
-    }
-
-    File[] contents = outputFolder.listFiles();
-    boolean safe = true;
-    if (contents != null) {
-      for (File content : contents) {
-        if (content.isDirectory()) {
-          if (content.getName().equalsIgnoreCase(config.getTemplateFolderName())) {
-            safe = false;
-          }
-          if (content.getName().equalsIgnoreCase(config.getContentFolderName())) {
-            safe = false;
-          }
-          if (content.getName().equalsIgnoreCase(config.getAssetFolderName())) {
-            safe = false;
-          }
-        }
+      if (!outputFolder.canWrite()) {
+          throw new Exception("Output folder is not writeable!");
       }
-    }
 
-    if (!safe) {
-      throw new Exception(String.format("Output folder '%s' already contains structure!",
-        outputFolder.getAbsolutePath()));
-    }
-    if (config.getExampleProjectByType(templateType) != null) {
-      File templateFile = new File(templateLocationFolder, config.getExampleProjectByType(templateType));
+      if (hasExistingStructure(outputFolder)) {
+          throw new Exception(String.format("Output folder '%s' already contains structure!", outputFolder.getAbsolutePath()));
+      }
+
+      String exampleProject = config.getExampleProjectByType(templateType);
+      if (exampleProject == null) {
+          throw new Exception("Cannot locate example project type: " + templateType);
+      }
+
+      File templateFile = new File(templateLocationFolder, exampleProject);
       if (!templateFile.exists()) {
-        throw new Exception("Cannot find example project file: " + templateFile.getPath());
+          throw new Exception("Cannot find example project file: " + templateFile.getPath());
       }
+
       ZipUtil.extract(new FileInputStream(templateFile), outputFolder);
-    } else {
-      throw new Exception("Cannot locate example project type: " + templateType);
-    }
   }
+
+    /**
+     * Checks if the output folder already contains JBake standard folders.
+     */
+    private boolean hasExistingStructure(File outputFolder) {
+        File[] contents = outputFolder.listFiles();
+        if (contents == null) {
+            return false;
+        }
+
+        for (File content : contents) {
+            if (content.isDirectory() && isJBakeFolder(content.getName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Compares a folder name against configured JBake folder names.
+     */
+    private boolean isJBakeFolder(String name) {
+        return name.equalsIgnoreCase(config.getTemplateFolderName())
+            || name.equalsIgnoreCase(config.getContentFolderName())
+            || name.equalsIgnoreCase(config.getAssetFolderName());
+    }
 }

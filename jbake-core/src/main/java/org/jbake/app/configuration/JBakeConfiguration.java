@@ -9,8 +9,8 @@ import java.util.TimeZone;
 
 /**
  * JBakeConfiguration gives you access to the project configuration. Typically located in a file called jbake.properties.
- * <p>
- * Use one of {@link JBakeConfigurationFactory} methods to create an instance.
+ *
+ * <p> Use one of {@link JBakeConfigurationFactory} methods to create an instance.
  */
 public interface JBakeConfiguration {
 
@@ -298,6 +298,9 @@ public interface JBakeConfiguration {
    */
   String getTemplateEncoding();
 
+    /**
+     * @return the template file name configured for the given document type
+     */
   String getTemplateByDocType(String doctype);
 
   File getTemplateFileByDocType(String doctype);

@@ -9,6 +9,10 @@ import org.jbake.template.RenderingException;
 
 import java.io.File;
 
+/**
+ * Rendering tool responsible for generating the main index page or its
+ * paginated pages of the site based on the configuration settings.
+ */
 public class IndexRenderer implements RenderingTool {
 
   @Override
