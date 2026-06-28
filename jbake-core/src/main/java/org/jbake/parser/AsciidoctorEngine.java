@@ -83,50 +83,80 @@ public class AsciidoctorEngine extends MarkupEngine {
     return engine;
   }
 
-  @Override
-  public void processHeader(final ParserContext context) {
-    Options options = getAsciiDocOptionsAndAttributes(context);
-    final Asciidoctor asciidoctor = getEngine(options);
-    DocumentHeader header = asciidoctor.readDocumentHeader(context.getFile());
-    DocumentModel documentModel = context.getDocumentModel();
-    if (header.getDocumentTitle() != null) {
-      documentModel.setTitle(header.getDocumentTitle().getCombined());
-    }
-    Map<String, Object> attributes = header.getAttributes();
-    for (Map.Entry<String, Object> attribute : attributes.entrySet()) {
-      String key = attribute.getKey();
-      Object value = attribute.getValue();
+    @Override
+    public void processHeader(final ParserContext context) {
+        Options options = getAsciiDocOptionsAndAttributes(context);
+        final Asciidoctor asciidoctor = getEngine(options);
+        DocumentHeader header = asciidoctor.readDocumentHeader(context.getFile());
+        DocumentModel documentModel = context.getDocumentModel();
 
-      if (hasJbakePrefix(key)) {
+        if (header.getDocumentTitle() != null) {
+            documentModel.setTitle(header.getDocumentTitle().getCombined());
+        }
+
+        // Iterates through all attributes extracted from the document header
+        Map<String, Object> attributes = header.getAttributes();
+        for (Map.Entry<String, Object> attribute : attributes.entrySet()) {
+            processAttribute(attribute.getKey(), attribute.getValue(), context, documentModel);
+        }
+    }
+
+    /**
+     * Evaluates attribute keys and directs them to their corresponding processing logic.
+     */
+    private void processAttribute(String key, Object value, ParserContext context, DocumentModel documentModel) {
+        if (hasJbakePrefix(key)) {
+            processJbakeAttribute(key, value, documentModel);
+        }
+
+        if (hasRevdate(key) && canCastToString(value)) {
+            processRevdate((String) value, context);
+        }
+
+        if ("jbake-tags".equals(key)) {
+            processTags(value, context);
+        } else {
+            // Directly saves the attribute if it does not require any special handling
+            documentModel.put(key, value);
+        }
+    }
+
+    /**
+     * Extracts and stores internal configuration properties specific to JBake.
+     */
+    private void processJbakeAttribute(String key, Object value, DocumentModel documentModel) {
         String pKey = key.substring(6);
         if (canCastToString(value)) {
-          storeHeaderValue(pKey, (String) value, documentModel);
+            storeHeaderValue(pKey, (String) value, documentModel);
         } else {
-          documentModel.put(pKey, value);
+            documentModel.put(pKey, value);
         }
-      }
-      if (hasRevdate(key) && canCastToString(value)) {
+    }
 
+    /**
+     * Parses and assigns the document revision date based on the expected system format.
+     */
+    private void processRevdate(String value, ParserContext context) {
         String dateFormat = context.getConfig().getDateFormat();
         DateFormat df = new SimpleDateFormat(dateFormat);
         try {
-          Date date = df.parse((String) value);
-          context.setDate(date);
+            Date date = df.parse(value);
+            context.setDate(date);
         } catch (ParseException e) {
-          LOGGER.error("Unable to parse revdate. Expected {}", dateFormat, e);
+            LOGGER.error("Unable to parse revdate. Expected {}", dateFormat, e);
         }
-      }
-      if ("jbake-tags".equals(key)) {
-        if (canCastToString(value)) {
-          context.setTags(((String) value).split(","));
-        } else {
-          LOGGER.error("Wrong value of 'jbake-tags'. Expected a String got '{}'", getValueClassName(value));
-        }
-      } else {
-        documentModel.put(key, attributes.get(key));
-      }
     }
-  }
+
+    /**
+     * Validates the data type and extracts the tag collection associated with the document.
+     */
+    private void processTags(Object value, ParserContext context) {
+        if (canCastToString(value)) {
+            context.setTags(((String) value).split(","));
+        } else {
+            LOGGER.error("Wrong value of 'jbake-tags'. Expected a String got '{}'", getValueClassName(value));
+        }
+    }
 
   private boolean canCastToString(Object value) {
     return value instanceof String;
